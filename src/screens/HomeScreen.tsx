@@ -1,13 +1,13 @@
 import {auth, db} from "../api/firebaseConfig";
 import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 
+import { FlatList } from 'react-native-gesture-handler';
 import React, {useEffect, useState} from 'react';
-import {StyleSheet, View, Text, Dimensions, Animated, Image, TouchableOpacity} from 'react-native';
+import {StyleSheet, View, Text, Dimensions, Image, TouchableOpacity} from 'react-native';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import {DateTimeFormatter, LocalDate} from "@js-joda/core";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {useDate} from "../context/DateContext";
-import FlatList = Animated.FlatList;
 import {useNavigation} from "@react-navigation/native";
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
 
@@ -60,7 +60,6 @@ const HomeScreen = () => {
   useEffect(() => {
     if (!auth.currentUser) return;
 
-    // 1. 현재 사용자의 영수증 데이터 실시간 감시
     const q = query(
       collection(db, "receipts"),
       where("userId", "==", auth.currentUser.uid),
@@ -68,7 +67,7 @@ const HomeScreen = () => {
     );
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const marks: any = {}; // 날짜별 합계 및 상태 저장
+      const marks: any = {};
       const allData: any[] = [];
 
       querySnapshot.forEach((doc) => {
@@ -97,7 +96,6 @@ const HomeScreen = () => {
     <SafeAreaView style={styles.container} edges={['top']}>
       <Calendar
         style={styles.calendar}
-        // 날짜 클릭 시 실행될 함수
         onDayPress={day => {
           const selectedDate = LocalDate.parse(day.dateString, DateTimeFormatter.ISO_LOCAL_DATE);
           setSelectedDate(selectedDate);
@@ -125,7 +123,6 @@ const HomeScreen = () => {
                 {date.day}
               </Text>
 
-              {/* ✅ 지출 합계 표시 */}
               {dayData && dayData.totalAmount > 0 && (
                 <Text
                   style={[styles.amountDayText, isSelected && { color: '#fff' }]}
@@ -195,7 +192,7 @@ const styles = StyleSheet.create({
   },
   dayContainer: {
     width: '100%',
-    height: 42, // 날짜와 금액이 들어갈 충분한 높이
+    height: 42,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 10,
@@ -209,7 +206,7 @@ const styles = StyleSheet.create({
   },
   amountDayText: {
     fontSize: 8,
-    color: '#e74c3c', // 지출은 빨간색 계열
+    color: '#e74c3c',
     fontWeight: 'bold',
   },
   header: {

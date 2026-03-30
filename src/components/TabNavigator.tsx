@@ -44,7 +44,7 @@ const TabNavigator = () => {
       <Tab.Screen
         name="report"
         component={ReportScreen}
-        options={{ tabBarLabel: '리포트' }}
+        options={{ tabBarLabel: '통계' }}
       />
     </Tab.Navigator>
   );

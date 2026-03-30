@@ -1,8 +1,8 @@
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
-import { db, storage } from "../api/firebaseConfig"; // auth 임포트 제거 (수정 시엔 userId 불필요)
+import { db, storage } from "../api/firebaseConfig";
 
-import React, { useCallback, useState } from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -21,8 +21,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { ActivityIndicator } from 'react-native';
 import { DateTimeFormatter, LocalDate, nativeJs } from "@js-joda/core";
-// useDate 커스텀 훅 제거 (수정 화면에서는 로컬 상태로 날짜 관리)
-import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 
 const emotionColors: { [key: string]: string } = {
   happy: '#9b59b6',
@@ -31,35 +30,37 @@ const emotionColors: { [key: string]: string } = {
 };
 
 const ModifyScreen = ({ route }: any) => {
-  // 1️⃣ DetailScreen에서 넘겨준 데이터 받아오기
+
   const { item } = route.params;
 
   const navigation = useNavigation<any>();
 
   const [isSheetVisible, setIsSheetVisible] = useState(false);
 
-  // 2️⃣ ✅ 기존 데이터로 상태(State) 초기화
-  const [image, setImage] = useState<string | null>(item.photoURL); // 기존 이미지 URL
-  const [amount, setAmount] = useState(item.amount.toLocaleString()); // 기존 금액 (쉼표 포함)
+  const [image, setImage] = useState<string | null>(item.photoURL);
+  const [amount, setAmount] = useState(item.amount.toLocaleString());
   const [emotion, setEmotion] = useState<'happy' | 'neutral' | 'regret' | null>(item.emotion);
   const [loading, setLoading] = useState(false);
   const [memo, setMemo] = useState(item.memo || '');
 
-  // 수정 화면에서는 선택된 날짜도 로컬 상태로 관리합니다. (Context 건드리지 않음)
   const [modifyDate, setModifyDate] = useState<LocalDate>(LocalDate.parse(item.dateString));
 
   const [showDatePicker, setShowDatePicker] = useState(false);
 
-  // 숫자를 3자리마다 쉼표가 들어간 문자열로 변환 (AddScreen과 동일)
   const formatAmount = (text: string) => {
     const cleaned = text.replace(/[^0-9]/g, '');
     return cleaned.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   };
 
+  const alertDisabled = () => {
+
+    Alert.alert('수정 불가', '한번 선택한 감정은 수정할 수 없습니다.');
+    return;
+  }
+
   const onChangeDate = (event: any, date?: Date) => {
     setShowDatePicker(Platform.OS === 'ios');
     if (date) {
-      // 네이티브 Date를 다시 LocalDate로 변환하여 로컬 상태에 저장
       const newDate = LocalDate.from(nativeJs(date));
       setModifyDate(newDate);
     }
@@ -143,23 +144,20 @@ const ModifyScreen = ({ route }: any) => {
         }
       }
 
-      // 5️⃣ ✅ Firestore 데이터 업데이트 (addDoc -> updateDoc)
-      const docRef = doc(db, "receipts", item.id); // 수정할 문서 참조
+      const docRef = doc(db, "receipts", item.id);
       await updateDoc(docRef, {
-        //userId는 업데이트 안 함
-        amount: parseInt(amount.replace(/,/g, '')), // 쉼표 제거 후 숫자로 저장
+        amount: parseInt(amount.replace(/,/g, '')),
         emotion: emotion,
         memo: memo,
-        photoURL: finalPhotoURL, // 최종 이미지 URL
-        updatedAt: serverTimestamp(), // 수정 시간 기록
-        dateString: modifyDate.toString() // 로컬 상태의 날짜 저장
+        photoURL: finalPhotoURL,
+        updatedAt: serverTimestamp(),
+        dateString: modifyDate.toString()
       });
 
       Alert.alert("성공", "영수증 기록이 수정되었습니다!", [
         {
           text: "확인",
-          // 6️⃣ ✅ 수정 후 상세화면으로 돌아가거나, 홈으로 바로 이동
-          onPress: () => navigation.popToTop() // 가장 확실하게 홈으로 이동 (DetailScreen도 스택에서 제거)
+          onPress: () => navigation.popToTop()
         }
       ]);
 
@@ -171,7 +169,6 @@ const ModifyScreen = ({ route }: any) => {
     }
   };
 
-  // 사진 삭제 핸들러 (AddScreen과 동일)
   const clearImage = () => {
     Alert.alert(
       "사진 삭제",
@@ -183,7 +180,6 @@ const ModifyScreen = ({ route }: any) => {
     );
   };
 
-  // 감정 버튼 컴포넌트 (AddScreen과 동일)
   const EmotionButton = ({ type, label, selected, onPress }: any) => (
     <TouchableOpacity
       onPress={onPress}
@@ -239,7 +235,6 @@ const ModifyScreen = ({ route }: any) => {
 
         {showDatePicker && (
           <DateTimePicker
-            // ✅ modifyDate(LocalDate)를 네이티브 Date로 변환하여 전달
             value={new Date(modifyDate.toString())}
             mode="date"
             onChange={onChangeDate}
@@ -267,11 +262,11 @@ const ModifyScreen = ({ route }: any) => {
           <EmotionButton type="happy"
                          label="💸 돈 최고"
                          selected={emotion === 'happy'}
-                         onPress={() => setEmotion('happy')} />
+                         onPress={alertDisabled} />
           <EmotionButton type="regret"
                          label="🫠 녹아내린 통장"
                          selected={emotion === 'regret'}
-                         onPress={() => setEmotion('regret')} />
+                         onPress={alertDisabled} />
         </View>
 
         <Text style={styles.label}>메모 (한 줄 기록)</Text>
@@ -296,7 +291,6 @@ const ModifyScreen = ({ route }: any) => {
         </TouchableOpacity>
       </ScrollView>
 
-      {/* 사진 선택 모달 (AddScreen과 동일) */}
       <Modal visible={isSheetVisible} transparent={true} animationType="none" onRequestClose={() => setIsSheetVisible(false)}>
         <View style={styles.modalOverlay}>
           <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={() => setIsSheetVisible(false)} />

@@ -13,13 +13,20 @@ const emotionColors: { [key: string]: string } = {
   regret: '#e74c3c',
 };
 
+const stampImages: { [key: string]: any } = {
+  happy: require('../../assets/stamp_happy.png'),
+  regret: require('../../assets/stamp_regret.png'),
+};
+
 const DetailScreen = ({ route, navigation }: any) => {
 
   const { item } = route.params;
 
   const [isSheetVisible, setIsSheetVisible] = useState(false);
 
-  const translateY = useRef(new Animated.Value(300)).current; // 초기값 (밑으로 숨김)
+  const stampImage = stampImages[item.emotion] || stampImages.happy;
+
+  const translateY = useRef(new Animated.Value(300)).current;
 
   const getKoreanDateString = (date: LocalDate) => {
     const days = ['일', '월', '화', '수', '목', '금', '토'];
@@ -49,12 +56,12 @@ const DetailScreen = ({ route, navigation }: any) => {
   const handleEditPress = () => {
 
     setIsSheetVisible(false);
-    // ✅ 데이터를 'item' 파라미터로 넘기며 이동
     navigation.navigate('Modify', { item: item });
   };
 
   const handleDeletePress = () => {
-    setIsSheetVisible(false); // 시트 먼저 닫기
+    setIsSheetVisible(false);
+
     Alert.alert(
       "기록 삭제",
       "이 영수증 기록을 정말 삭제하시겠습니까?",
@@ -73,7 +80,7 @@ const DetailScreen = ({ route, navigation }: any) => {
     try {
       await deleteDoc(doc(db, "receipts", item.id));
       Alert.alert("삭제 완료", "기록이 성공적으로 삭제되었습니다.");
-      navigation.goBack(); // 홈으로 돌아가기
+      navigation.goBack();
     } catch (error) {
       console.error("삭제 중 오류:", error);
       Alert.alert("오류", "삭제에 실패했습니다.");
@@ -97,6 +104,12 @@ const DetailScreen = ({ route, navigation }: any) => {
           >
             <Ionicons name="ellipsis-vertical" size={24} color="#fff" />
           </TouchableOpacity>
+
+          <Image
+            source={stampImage}
+            style={styles.stampImage}
+            resizeMode="contain"
+          />
         </View>
 
         {/* 상세 정보 영역 */}
@@ -139,7 +152,6 @@ const DetailScreen = ({ route, navigation }: any) => {
           <Animated.View style={[styles.sheetContainer, { transform: [{ translateY }] }]}>
             <Text style={styles.sheetTitle}>기록 관리</Text>
 
-            {/* ✅ 수정하기 버튼 */}
             <TouchableOpacity
               style={styles.sheetButton}
               onPress={handleEditPress}
@@ -148,7 +160,6 @@ const DetailScreen = ({ route, navigation }: any) => {
               <Text style={styles.sheetButtonText}>수정하기</Text>
             </TouchableOpacity>
 
-            {/* ✅ 삭제하기 버튼 (빨간색 포인트) */}
             <TouchableOpacity
               style={[styles.sheetButton, { borderBottomWidth: 0 }]}
               onPress={handleDeletePress}
@@ -172,7 +183,14 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 400,
     position: 'relative',
-    // iOS에서 이미지가 잘리지 않게 하려면 여기에 padding이나 margin을 주지 않습니다.
+  },
+  stampImage: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 150,
+    height: 150,
+    transform: [{ rotate : '-18deg' }]
   },
   image: { width: '100%', height: '100%' },
   backButton: {
@@ -184,8 +202,8 @@ const styles = StyleSheet.create({
     padding: 8
   },
   moreButton: {
-    position: 'absolute', // 절대 배치
-    top: 20,              // 우측 상단 여백
+    position: 'absolute',
+    top: 20,
     right: 20,
     backgroundColor: 'rgba(0,0,0,0.4)',
     padding: 8,
@@ -218,7 +236,7 @@ const styles = StyleSheet.create({
     paddingTop: 15,
     paddingBottom: Platform.OS === 'ios' ? 35 : 25, // iOS 하단 여백 대응
     width: '100%',
-    // 그림자 추가로 입체감 부여
+
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,

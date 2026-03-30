@@ -167,12 +167,14 @@ const AddScreen = () => {
         dateString: selectedDate.toString()
       });
 
-      Alert.alert("성공", "영수증이 기록되었습니다!", [
-        {
-          text: "확인",
-          onPress: () => navigation.navigate('home', { screen: 'Home' })
-        }
-      ]);
+// 4. 입력창 초기화 (이동하기 전에 초기화)
+      resetField();
+
+      // 5️⃣ ✅ Alert 대신 완료 화면으로 이동 (데이터 들고 가기)
+      navigation.navigate('SaveComplete', {
+        photoURL: photoURL, // 방금 업로드한 스토리지 URL
+        emotion: emotion    // 선택한 감정 ('happy' 또는 'regret')
+      });
 
       // 4. 입력창 초기화
       resetField();
@@ -218,7 +220,7 @@ const AddScreen = () => {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Ionicons name="chevron-back" size={24} color="#333" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>기록 등록하기</Text>
+        <Text style={styles.headerTitle}>기록하기</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -300,7 +302,7 @@ const AddScreen = () => {
           placeholder="어디에 쓰셨나요? (예: 편의점 간식)"
           value={memo}
           onChangeText={setMemo}
-          maxLength={40} // 한 줄 메모이므로 글자 수 제한
+          maxLength={40}
         />
 
           <TouchableOpacity
@@ -321,7 +323,6 @@ const AddScreen = () => {
         onRequestClose={() => setIsSheetVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          {/* 1. 배경을 누르면 닫히는 투명 영역 (Dim) */}
           <TouchableOpacity
             style={StyleSheet.absoluteFill}
             activeOpacity={1}
@@ -360,7 +361,7 @@ const AddScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: '#ffffff' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -391,13 +392,13 @@ const styles = StyleSheet.create({
     color: '#ef5350',
     marginLeft: 4,
   },
-  imageContainer: { width: '100%', height: 250 }, // 컨테이너 크기 고정
+  imageContainer: { width: '100%', height: 250 },
   imagePlaceholder: {
     width: '100%', height: 250, backgroundColor: '#f9f9f9', borderRadius: 10,
     borderWidth: 1, borderColor: '#eee', justifyContent: 'center', alignItems: 'center', overflow: 'hidden'
   },
   centerContent: { alignItems: 'center' },
-  previewWrapper: { width: '100%', height: '100%', position: 'relative' }, // position: relative가 중요!
+  previewWrapper: { width: '100%', height: '100%', position: 'relative' },
   fullImage: { width: '100%', height: '100%', borderRadius: 10 },
   closeButton: {
     position: 'absolute', // 미리보기 위에 띄우기
