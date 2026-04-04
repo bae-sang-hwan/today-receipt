@@ -1,40 +1,63 @@
 {
   "expo": {
     "name": "오늘의 영수증",
-    "slug": "mint-mobile",
+    "slug": "today-receipt",
     "version": "1.0.0",
-    "sdkVersion": "54.0.0",
     "orientation": "portrait",
     "icon": "./assets/today-icon.png",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/today-icon.png",
-      "resizeMode": "cover",
-      "backgroundColor": "#78c5fb"
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.mint-mobile"
+      "bundleIdentifier": "com.hyeheee.todayreceipt"
     },
     "android": {
+      "package": "com.hyeheee.todayreceipt",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/today-icon.png",
-        "backgroundColor": "#78c5fb"
-      }
+        "backgroundColor": "#ffffff"
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
+      "@react-native-firebase/app",
+      "@react-native-firebase/auth",
       "expo-font",
       [
         "expo-image-picker",
         {
-          "photosPermission": "사용자가 영수증 사진을 선택할 수 있도록 앨범에 접근합니다.",
-          "cameraPermission": "영수증을 촬영할 수 있도록 카메라에 접근합니다."
+          "photosPermission": "사용자가 사진을 선택할 수 있도록 앨범에 접근합니다.",
+          "cameraPermission": "사진을 촬영할 수 있도록 카메라에 접근합니다."
         }
       ],
-      "@react-native-community/datetimepicker"
-    ]
+      "@react-native-community/datetimepicker",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableOnBackInvokedCallback": true,
+            "extraGCMSenderIds": [],
+            "packagingOptions": {
+              "pickFirst": ["**/libjsc.so"]
+            }
+          }
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "cb553c3e-d067-46a9-8356-574a1a467fa4"
+      }
+    }
   }
 }

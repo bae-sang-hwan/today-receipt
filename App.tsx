@@ -7,7 +7,6 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import {useCallback, useEffect, useState} from "react";
 import {getOrCreateUser} from "./src/api/authService";
-import { User } from 'firebase/auth';
 import TabNavigator from "./src/components/TabNavigator";
 import {SafeAreaProvider} from "react-native-safe-area-context";
 import {DateProvider} from "./src/context/DateContext";
@@ -15,6 +14,10 @@ import DetailScreen from "./src/screens/DetailScreen";
 import {GestureHandlerRootView} from "react-native-gesture-handler";
 import ModifyScreen from "./src/screens/ModifyScreen";
 import SaveCompleteScreen from "./src/screens/SaveCompleteScreen";
+import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
+import { enableScreens } from 'react-native-screens';
+
+enableScreens(false);
 
 SplashScreen.preventAutoHideAsync();
 
@@ -23,29 +26,36 @@ const Stack = createNativeStackNavigator();
 export default function App() {
 
   const [ appIsReady, setAppIsReady ] = useState(false);
-  const [ user, setUser ] = useState<User | null>(null);
+  const [ user, setUser ] = useState<FirebaseAuthTypes.User | null>(null);
 
   useEffect(() => {
+    // 1. 로그인 상태 감시자 설정 (가장 정확한 방법)
+    const unsubscribe = auth().onAuthStateChanged((currentUser) => {
+      setUser(currentUser);
+      // 유저 정보가 확정되면 앱 준비 완료로 간주 (필요 시)
+    });
+
     async function prepare() {
       try {
         await Font.loadAsync(Ionicons.font);
 
+        // 2. 익명 로그인 또는 유저 생성 로직 실행
+        // 이미 로그인되어 있다면 authService 내부에서 처리될 것입니다.
         const loggedInUser = await getOrCreateUser();
-        setUser(loggedInUser);
 
-        // await auth().signInAnonymously();
-
+        // 1초 대기 (스플래시 체류 시간)
         await new Promise(resolve => setTimeout(resolve, 1000));
-        // ---------------------------------------------------
-
       } catch (e) {
-        console.warn(e);
+        console.warn("초기화 에러:", e);
       } finally {
         setAppIsReady(true);
       }
     }
 
     prepare();
+
+    // 언마운트 시 감시자 해제
+    return () => unsubscribe();
   }, []);
 
   const onLayoutRootView = useCallback(async () => {
@@ -59,10 +69,12 @@ export default function App() {
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={{ flex: 1 }} onLayout={onLayoutRootView}>
       <DateProvider>
         <SafeAreaProvider>
-          <NavigationContainer onReady={onLayoutRootView}>
+          <StatusBar style="auto" />
+
+          <NavigationContainer>
             <Stack.Navigator>
               {user ? (
                 <>
@@ -100,7 +112,6 @@ export default function App() {
                 <Stack.Screen name="LoginError" component={ErrorScreen} />
               )}
             </Stack.Navigator>
-            <StatusBar style="auto" />
           </NavigationContainer>
         </SafeAreaProvider>
       </DateProvider>

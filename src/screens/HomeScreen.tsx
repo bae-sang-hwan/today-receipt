@@ -1,8 +1,8 @@
-import {auth, db} from "../api/firebaseConfig";
-import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
+import firestore from '@react-native-firebase/firestore';
+import auth from '@react-native-firebase/auth';
 
 import { FlatList } from 'react-native-gesture-handler';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {StyleSheet, View, Text, Dimensions, Image, TouchableOpacity} from 'react-native';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import {DateTimeFormatter, LocalDate} from "@js-joda/core";
@@ -23,8 +23,7 @@ LocaleConfig.locales['fr'] = {
 LocaleConfig.defaultLocale = 'fr';
 
 const emotionColors: { [key: string]: string } = {
-  happy: '#9b59b6',
-  neutral: '#bdc3c7',
+  happy: '#6200ee',
   regret: '#e74c3c',
 };
 
@@ -58,54 +57,65 @@ const HomeScreen = () => {
   };
 
   useEffect(() => {
-    if (!auth.currentUser) return;
+    if (!auth().currentUser) return;
 
-    const q = query(
-      collection(db, "receipts"),
-      where("userId", "==", auth.currentUser.uid),
-      orderBy("createdAt", "desc")
-    );
+    const unsubscribe = firestore()
+      .collection("receipts")
+      .where("userId", "==", auth().currentUser!.uid)
+      .orderBy("createdAt", "desc")
+      .onSnapshot((querySnapshot) => {
+        const marks: any = {};
+        const allData: any[] = [];
 
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const marks: any = {};
-      const allData: any[] = [];
+        querySnapshot.forEach((doc) => {
+          const data: any = { id: doc.id, ...doc.data() };
+          allData.push(data);
 
-      querySnapshot.forEach((doc) => {
-        const data: any = { id: doc.id, ...doc.data() };
-        allData.push(data);
+          const dateStr = data.dateString;
+          const amountNum = parseInt(data.amount.toString().replace(/,/g, '')) || 0;
 
-        const dateStr = data.dateString;
-        const amountNum = parseInt(data.amount.toString().replace(/,/g, '')) || 0;
+          if (!marks[dateStr]) {
+            marks[dateStr] = { totalAmount: 0 };
+          }
+          marks[dateStr].totalAmount += amountNum;
+        });
 
-        if (!marks[dateStr]) {
-          marks[dateStr] = { totalAmount: 0 };
-        }
-        marks[dateStr].totalAmount += amountNum;
+        setReceipts(allData);
+        setMarkedDates(marks);
       });
-
-      setReceipts(allData);
-      setMarkedDates(marks);
-    });
 
     return () => unsubscribe();
   }, [selectedDate]);
 
   const filteredList = receipts.filter(item => item.dateString === selectedDate.toString());
 
+  const selectedDayTotal = useMemo(() => {
+
+    return filteredList.reduce((sum, item) => {
+      const amountNum = parseInt(item.amount.toString().replace(/,/g, '')) || 0;
+      return sum + amountNum;
+    }, 0);
+  }, [filteredList]);
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <Calendar
         style={styles.calendar}
+        enableSwipeMonths={true}
         onDayPress={day => {
           const selectedDate = LocalDate.parse(day.dateString, DateTimeFormatter.ISO_LOCAL_DATE);
           setSelectedDate(selectedDate);
-          console.log('선택된 날짜:', day.dateString);
         }}
         dayComponent={({ date, state }: any) => {
           const dateStr = date.dateString;
           const dayData = markedDates[dateStr];
           const isSelected = selectedDate.toString() === dateStr;
           const isToday = state === 'today';
+
+          // 1. 해당 날짜의 요일 확인 (1: 월, ..., 6: 토, 7: 일)
+          const dayOfWeek = LocalDate.parse(dateStr).dayOfWeek().value();
+          const isSaturday = dayOfWeek === 6;
+          const isSunday = dayOfWeek === 7;
 
           return (
             <TouchableOpacity
@@ -117,7 +127,18 @@ const HomeScreen = () => {
             >
               <Text style={[
                 styles.dayText,
-                state === 'disabled' ? { color: '#dbe0e0' } : isToday ? { color: '#6200ee', fontWeight: 'bold' } : { color: '#2d4150' },
+                // 기본 색상 설정
+                state === 'disabled'
+                  ? { color: '#dbe0e0' }
+                  : isToday
+                    ? { color: '#6200ee', fontWeight: 'bold' }
+                    : { color: '#2d4150' },
+
+                // 2. 주말 색상 덮어쓰기 (선택되지 않았을 때만 적용)
+                !isSelected && state !== 'disabled' && isSaturday && { color: '#3498db' }, // 토요일 파란색
+                !isSelected && state !== 'disabled' && isSunday && { color: '#e74c3c' },   // 일요일 빨간색
+
+                // 선택되었을 때는 하얀색 유지
                 isSelected && { color: '#fff' }
               ]}>
                 {date.day}
@@ -128,7 +149,6 @@ const HomeScreen = () => {
                   style={[styles.amountDayText, isSelected && { color: '#fff' }]}
                   numberOfLines={1}
                 >
-                  {/* 만원 단위 초과 시 '만'으로 표기하거나 그대로 표기 */}
                   {dayData.totalAmount >= 10000
                     ? `${Math.floor(dayData.totalAmount / 1000) / 10}만`
                     : dayData.totalAmount.toLocaleString()}
@@ -144,10 +164,16 @@ const HomeScreen = () => {
         }}
       />
 
-      {/* 리스트 섹션 */}
       <PanGestureHandler onHandlerStateChange={onGestureEvent}>
         <View style={styles.listContainer}>
-          <Text style={styles.listTitle}>{getKoreanDateString(selectedDate)}</Text>
+          <View style={styles.listHeaderRow}>
+            <Text style={styles.listTitle}>{getKoreanDateString(selectedDate)}</Text>
+            {selectedDayTotal > 0 && (
+              <Text style={styles.dayTotalText}>
+                이날은 <Text style={styles.totalAmountHighlight}>{selectedDayTotal.toLocaleString()}</Text>원 썼어요
+              </Text>
+            )}
+          </View>
 
           <FlatList
             data={filteredList}
@@ -168,12 +194,12 @@ const HomeScreen = () => {
                 <View style={styles.cardContent}>
                   <View style={styles.cardHeader}>
                     <Text style={[styles.emotionText, { color: emotionColors[item.emotion] }]}>
-                      {item.emotion === 'happy' ? '💸 돈 최고' : '🫠 녹아내린 통장'}
+                      {item.emotion === 'happy' ? '🛍️ 잘 샀다' : '🫠 후회'}
                     </Text>
                     <Text style={styles.amountText}>{Number(item.amount).toLocaleString()}원</Text>
                   </View>
                   <Text style={styles.memoText} numberOfLines={1}>
-                    {item.memo || "작성된 메모가 없습니다."}
+                    {item.memo || "작성된 메모가 없어요."}
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -235,8 +261,27 @@ const styles = StyleSheet.create({
   infoBox: { padding: 20, borderTopWidth: 1, borderColor: '#eee' },
   infoTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
 
-  listContainer: { flex: 1, backgroundColor: '#f8f9fa', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, marginTop: 10 },
-  listTitle: { fontSize: 16, fontWeight: 'bold', color: '#333', marginBottom: 15 },
+  listContainer: { flex: 1, backgroundColor: '#f8f9fa', padding: 20 },
+  listHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  listTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333'
+  },
+  dayTotalText: {
+    fontSize: 14,
+    color: '#636e72',
+    fontWeight: '500',
+  },
+  totalAmountHighlight: {
+    color: '#6200ee',
+    fontWeight: 'bold',
+  },
   card: { flexDirection: 'row', backgroundColor: '#fff', borderRadius: 15, padding: 12, marginBottom: 12, alignItems: 'center', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 3 },
   cardImage: { width: 70, height: 70, borderRadius: 10, backgroundColor: '#eee' },
   cardContent: { flex: 1, marginLeft: 15 },

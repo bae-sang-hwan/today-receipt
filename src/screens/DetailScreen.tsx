@@ -3,13 +3,12 @@ import {Alert, Animated, Modal, Platform} from 'react-native';
 import { StyleSheet, View, Text, Image, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { db } from '../api/firebaseConfig';
-import { doc, deleteDoc } from 'firebase/firestore';
+import firestore from '@react-native-firebase/firestore';
 import {DateTimeFormatter, LocalDate} from "@js-joda/core";
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const emotionColors: { [key: string]: string } = {
-  happy: '#9b59b6',
-  neutral: '#bdc3c7',
+  happy: '#6200ee',
   regret: '#e74c3c',
 };
 
@@ -21,6 +20,7 @@ const stampImages: { [key: string]: any } = {
 const DetailScreen = ({ route, navigation }: any) => {
 
   const { item } = route.params;
+  const insets = useSafeAreaInsets();
 
   const [isSheetVisible, setIsSheetVisible] = useState(false);
 
@@ -78,7 +78,7 @@ const DetailScreen = ({ route, navigation }: any) => {
 
   const deleteReceipt = async () => {
     try {
-      await deleteDoc(doc(db, "receipts", item.id));
+      await firestore().collection("receipts").doc(item.id).delete();
       Alert.alert("삭제 완료", "기록이 성공적으로 삭제되었습니다.");
       navigation.goBack();
     } catch (error) {
@@ -120,7 +120,7 @@ const DetailScreen = ({ route, navigation }: any) => {
 
           <View style={styles.row}>
             <Text style={[styles.emotionBadge, { backgroundColor: emotionColors[item.emotion] }]}>
-              {item.emotion === 'happy' ? '💸 "돈 최고' : '🫠 녹아내린 통장'}
+              {item.emotion === 'happy' ? '🛍️ "잘 샀다' : '😭 후회'}
             </Text>
             <Text style={styles.amountText}>{Number(item.amount).toLocaleString()}원</Text>
           </View>
@@ -149,7 +149,7 @@ const DetailScreen = ({ route, navigation }: any) => {
           />
 
           {/* 2. 밑에서 올라오는 화이트 시트 (Animated.View) */}
-          <Animated.View style={[styles.sheetContainer, { transform: [{ translateY }] }]}>
+          <Animated.View style={[styles.sheetContainer, { transform: [{ translateY }], paddingBottom: insets.bottom }]}>
             <Text style={styles.sheetTitle}>기록 관리</Text>
 
             <TouchableOpacity
@@ -225,8 +225,8 @@ const styles = StyleSheet.create({
 
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)', // 배경 Dim 효과 (즉시 나타남)
-    justifyContent: 'flex-end',         // 시트를 하단에 배치
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'flex-end',
   },
   sheetContainer: {
     backgroundColor: '#fff',
@@ -234,7 +234,6 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
     paddingHorizontal: 20,
     paddingTop: 15,
-    paddingBottom: Platform.OS === 'ios' ? 35 : 25, // iOS 하단 여백 대응
     width: '100%',
 
     shadowColor: '#000',

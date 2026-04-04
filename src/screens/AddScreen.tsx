@@ -1,8 +1,8 @@
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { db, storage, auth } from "../api/firebaseConfig";
+import firestore from '@react-native-firebase/firestore';
+import { db, storage_ref, auth_ref } from '../api/firebaseConfig';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useState} from 'react';
 import {
   StyleSheet,
   View,
@@ -13,9 +13,10 @@ import {
   ScrollView,
   Alert,
   Platform,
-  Modal, Animated
+  Modal, Animated,
+  KeyboardAvoidingView
 } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
+import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import {SafeAreaView} from "react-native-safe-area-context";
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -25,14 +26,14 @@ import {useDate} from "../context/DateContext";
 import {useFocusEffect, useNavigation} from "@react-navigation/native";
 
 const emotionColors: { [key: string]: string } = {
-  happy: '#9b59b6',
-  neutral: '#bdc3c7',
+  happy: '#6200ee',
   regret: '#e74c3c',
 };
 
 const AddScreen = () => {
 
   const navigation = useNavigation<any>();
+  const insets = useSafeAreaInsets();
 
   const [ isSheetVisible, setIsSheetVisible ] = useState(false);
   const [ image, setImage     ] = useState<string | null>(null);
@@ -63,11 +64,10 @@ const AddScreen = () => {
     setMemo('');
   }
 
-  // 숫자를 3자리마다 쉼표가 들어간 문자열로 변환
   const formatAmount = (text: string) => {
-    // 숫자만 남기기
+
     const cleaned = text.replace(/[^0-9]/g, '');
-    // 3자리마다 쉼표 추가
+
     return cleaned.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   };
 
@@ -87,99 +87,83 @@ const AddScreen = () => {
 
 // 1. 직접 카메라 촬영 로직
   const openCamera = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('권한 필요', '카메라 접근 권한이 필요합니다.');
-      return;
-    }
-
-    let result = await ImagePicker.launchCameraAsync({
-      allowsEditing: false, // ✅ true에서 false로 변경 (편집 단계 건너뜀)
-      quality: 0.5,         // 화질은 그대로 유지 (서버 용량 절약)
-    });
-
-    if (!result.canceled) {
-      setImage(result.assets[0].uri);
-    }
+    launchCamera(
+      { mediaType: 'photo', quality: 0.5 },
+      (response) => {
+        if (response.didCancel) return;
+        if (response.errorCode) {
+          Alert.alert('에러', '카메라를 열 수 없습니다.');
+          return;
+        }
+        if (response.assets) {
+          setImage(response.assets[0].uri ?? null);
+        }
+      }
+    );
   };
 
-// 2. 갤러리 선택 로직도 동일하게 수정 (선택 사항)
   const openLibrary = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('권한 필요', '갤러리 접근 권한이 필요합니다.');
-      return;
-    }
-
-    let result = await ImagePicker.launchImageLibraryAsync({
-      allowsEditing: false, // ✅ false로 바꾸면 앨범에서 고르자마자 바로 등록됩니다.
-      quality: 0.5,
-    });
-
-    if (!result.canceled) {
-      setImage(result.assets[0].uri);
-    }
+    launchImageLibrary(
+      { mediaType: 'photo', quality: 0.5 },
+      (response) => {
+        if (response.didCancel) return;
+        if (response.errorCode) {
+          Alert.alert('에러', '갤러리를 열 수 없습니다.');
+          return;
+        }
+        if (response.assets) {
+          setImage(response.assets[0].uri ?? null);
+        }
+      }
+    );
   };
 
   const handleSave = async () => {
-
-    if (!image && !amount && !emotion) {
-      Alert.alert("알림", "사진, 금액, 감정을 모두 입력해주세요!");
+    if (!image || !amount || !emotion) {
+      Alert.alert("알림", "모든 항목을 입력해주세요!");
       return;
     }
 
-    if (!image) {
-      Alert.alert("알림", "사진을 추가해주세요!");
-      return;
-    }
-
-    if (!amount) {
-      Alert.alert("알림", "금액을 입력해주세요!");
-      return;
-    }
-
-    if (!emotion) {
-      Alert.alert("알림", "감정을 선택해주세요!");
-      return;
-    }
-
-    setLoading(true); // 로딩 시작
+    setLoading(true);
 
     try {
-      // 2. 이미지 업로드 (Firebase Storage)
-      const response = await fetch(image);
-      const blob = await response.blob(); // 이미지를 Blob 형태로 변환
-
       const filename = image.substring(image.lastIndexOf('/') + 1);
-      const storageRef = ref(storage, `receipts/${auth.currentUser?.uid}/${LocalDate.now()}_${filename}`);
+      const userId = auth_ref.currentUser?.uid;
 
-      await uploadBytes(storageRef, blob);
-      const photoURL = await getDownloadURL(storageRef);
+      if (!userId) {
+        Alert.alert("에러", "로그인이 필요합니다.");
+        return;
+      }
 
-      // 3. 데이터 저장 (Firestore)
-      await addDoc(collection(db, "receipts"), {
-        userId: auth.currentUser?.uid,
-        amount: parseInt(amount.replace(/,/g, '')), // 쉼표 제거 후 숫자로 저장
+      // 2. Storage 업로드 (네이티브 방식은 putFile에 uri를 바로 넣습니다)
+      // 경로 처리를 위해 prefix가 필요할 수 있습니다 (Android: file://)
+      const uploadPath = Platform.OS === 'android' ? image : image.replace('file://', '');
+
+      const reference = storage_ref.ref(`receipts/${userId}/${Date.now()}_${filename}`);
+
+      // 🔥 핵심: fetch/blob 없이 파일 경로를 직접 넣습니다.
+      await reference.putFile(uploadPath);
+
+      // 3. 다운로드 URL 가져오기
+      const photoURL = await reference.getDownloadURL();
+
+      // 4. Firestore 저장 (네이티브 방식)
+      await db.collection("receipts").add({
+        userId: userId,
+        amount: parseInt(amount.replace(/,/g, '')),
         emotion: emotion,
         memo: memo,
         photoURL: photoURL,
-        createdAt: serverTimestamp(), // 서버 시간 기준
+        createdAt: firestore.FieldValue.serverTimestamp(), // firestore 임포트 필요
         dateString: selectedDate.toString()
       });
 
-// 4. 입력창 초기화 (이동하기 전에 초기화)
+      navigation.navigate('SaveComplete', { photoURL, emotion });
       resetField();
 
-      // 5️⃣ ✅ Alert 대신 완료 화면으로 이동 (데이터 들고 가기)
-      navigation.navigate('SaveComplete', {
-        photoURL: photoURL, // 방금 업로드한 스토리지 URL
-        emotion: emotion    // 선택한 감정 ('happy' 또는 'regret')
-      });
-
-      // 4. 입력창 초기화
-      resetField();
     } catch (error) {
-      console.error("저장 에러:", error);
+      console.error("저장 에러 상세:", error);
+      // 에러 메시지가 'auth/unauthorized'라면 Firebase Console의 Storage 규칙(Rules)을 확인해야 합니다.
       Alert.alert("에러", "저장 중 문제가 발생했습니다.");
     } finally {
       setLoading(false);
@@ -215,95 +199,99 @@ const AddScreen = () => {
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="chevron-back" size={24} color="#333" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>기록하기</Text>
-        <View style={{ width: 40 }} />
-      </View>
-
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.label}>
-          영수증 사진<Text style={styles.required}>*</Text>
-        </Text>
-
-        <View style={styles.imageContainer}>
-          {image ? (
-            <View style={styles.previewWrapper}>
-              <Image source={{ uri: image }} style={styles.fullImage} />
-              {/* X 버튼 */}
-              <TouchableOpacity style={styles.closeButton} onPress={clearImage}>
-                <Ionicons name="close-circle" size={30} color="#ff4444" />
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <TouchableOpacity style={styles.imagePlaceholder} onPress={pickImage}>
-              <View style={styles.centerContent}>
-                <Ionicons name="camera" size={40} color="#ccc" />
-                <Text style={{ color: '#ccc', marginTop: 10 }}>영수증 촬영하기</Text>
-              </View>
-            </TouchableOpacity>
-          )}
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={insets.top}
+      >
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <Ionicons name="chevron-back" size={24} color="#333" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>기록하기</Text>
+          <View style={{ width: 40 }} />
         </View>
 
-        <Text style={styles.label}>
-          소비 날짜<Text style={styles.required}>*</Text>
-        </Text>
-        <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.dateSelector}>
-          <Ionicons name="calendar-outline" size={20} color="#6200ee" />
-          <Text style={styles.dateText}>
-            {selectedDate.format(DateTimeFormatter.ofPattern('yyyy년 MM월 dd일'))}
+        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+          <Text style={styles.imgLabel}>
+            사진<Text style={styles.required}>*</Text>
           </Text>
-          <Text style={styles.editLink}>변경</Text>
-        </TouchableOpacity>
 
-        {showDatePicker && (
-          <DateTimePicker
-            // ✅ Picker에는 네이티브 Date 객체를 넘겨줘야 합니다.
-            value={new Date(selectedDate.toString())}
-            mode="date"
-            onChange={onChangeDate}
+          <View style={styles.imageContainer}>
+            {image ? (
+              <View style={styles.previewWrapper}>
+                <Image source={{ uri: image }} style={styles.fullImage} />
+                {/* X 버튼 */}
+                <TouchableOpacity style={styles.closeButton} onPress={clearImage}>
+                  <Ionicons name="close-circle" size={30} color="#ff4444" />
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <TouchableOpacity style={styles.imagePlaceholder} onPress={pickImage}>
+                <View style={styles.centerContent}>
+                  <Ionicons name="camera" size={40} color="#ccc" />
+                </View>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          <Text style={styles.label}>
+            소비 날짜<Text style={styles.required}>*</Text>
+          </Text>
+          <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.dateSelector}>
+            <Ionicons name="calendar-outline" size={20} color="#6200ee" />
+            <Text style={styles.dateText}>
+              {selectedDate.format(DateTimeFormatter.ofPattern('yyyy년 MM월 dd일'))}
+            </Text>
+            <Text style={styles.editLink}>변경</Text>
+          </TouchableOpacity>
+
+          {showDatePicker && (
+            <DateTimePicker
+              // ✅ Picker에는 네이티브 Date 객체를 넘겨줘야 합니다.
+              value={new Date(selectedDate.toString())}
+              mode="date"
+              onChange={onChangeDate}
+            />
+          )}
+
+          <Text style={styles.label}>
+            사용 금액<Text style={styles.required}>*</Text>
+          </Text>
+          <TextInput
+            style={styles.input}
+            placeholder="금액을 입력하세요"
+            keyboardType="numeric"
+            value={amount}
+            onChangeText={(text) => {
+              const formatted = formatAmount(text);
+              setAmount(formatted);
+            }}
           />
-        )}
 
-        <Text style={styles.label}>
-          사용 금액<Text style={styles.required}>*</Text>
-        </Text>
-        <TextInput
-          style={styles.input}
-          placeholder="금액을 입력하세요"
-          keyboardType="numeric"
-          value={amount}
-          onChangeText={(text) => {
-            const formatted = formatAmount(text);
-            setAmount(formatted);
-          }}
-        />
+          <Text style={styles.label}>
+            이 소비에 대한 내 감정은?<Text style={styles.required}>*</Text>
+          </Text>
+          <View style={styles.emotionRow}>
+            <EmotionButton type="happy"
+                           label="🛍️ 잘 샀다"
+                           selected={emotion === 'happy'}
+                           onPress={() => setEmotion('happy')} />
+            <EmotionButton type="regret"
+                           label="😭 후회"
+                           selected={emotion === 'regret'}
+                           onPress={() => setEmotion('regret')} />
+          </View>
 
-        <Text style={styles.label}>
-          이 소비에 대한 내 감정은?<Text style={styles.required}>*</Text>
-        </Text>
-        <View style={styles.emotionRow}>
-          <EmotionButton type="happy"
-                         label="💸 돈 최고"
-                         selected={emotion === 'happy'}
-                         onPress={() => setEmotion('happy')} />
-          <EmotionButton type="regret"
-                         label="🫠 녹아내린 통장"
-                         selected={emotion === 'regret'}
-                         onPress={() => setEmotion('regret')} />
-        </View>
-
-        <Text style={styles.label}>메모 (한 줄 기록)</Text>
-        <TextInput
-          style={styles.memoInput}
-          placeholder="어디에 쓰셨나요? (예: 편의점 간식)"
-          value={memo}
-          onChangeText={setMemo}
-          maxLength={40}
-        />
+          <Text style={styles.label}>메모 (한 줄 기록)</Text>
+          <TextInput
+            style={styles.memoInput}
+            placeholder="어디에 쓰셨나요? (예: 편의점 간식)"
+            value={memo}
+            onChangeText={setMemo}
+            maxLength={40}
+          />
 
           <TouchableOpacity
             style={[styles.saveButton, loading && { backgroundColor: '#ccc' }]}
@@ -314,8 +302,10 @@ const AddScreen = () => {
             ) : (
               <Text style={styles.saveButtonText}>기록하기</Text>
             )}
-        </TouchableOpacity>
-      </ScrollView>
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
+
       <Modal
         visible={isSheetVisible}
         transparent={true}
@@ -329,7 +319,7 @@ const AddScreen = () => {
             onPress={() => setIsSheetVisible(false)}
           />
 
-          <Animated.View style={styles.sheetContainer}>
+          <Animated.View style={[styles.sheetContainer, {paddingBottom: insets.bottom}]}>
             <Text style={styles.sheetTitle}>영수증 가져오기</Text>
 
             <TouchableOpacity
@@ -381,6 +371,13 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   scrollContent: { padding: 20 },
+  imgLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginTop: 0,
+    marginBottom: 10,
+    flexDirection: 'row'
+  },
   label: {
     fontSize: 16,
     fontWeight: 'bold',
@@ -458,7 +455,6 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
     paddingHorizontal: 20,
     paddingTop: 15,
-    paddingBottom: Platform.OS === 'ios' ? 40 : 30, // iOS 하단 노치 대응
     width: '100%',
     // 그림자 추가로 입체감 부여
     shadowColor: '#000',

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "296991066097",
+    "project_id": "today-receipt",
+    "storage_bucket": "today-receipt.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:296991066097:android:031b16ea185c1e9ab26650",
+        "android_client_info": {
+          "package_name": "com.hyeheee.todayreceipt"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCwhGgnc1KFOIJ0YsKon4LpOv_KtryBJG8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
