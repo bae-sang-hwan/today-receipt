@@ -16,8 +16,8 @@
       "bundleIdentifier": "com.hyeheee.todayreceipt"
     },
     "android": {
-      "package": "com.hyeheee.todayreceipt",
       "googleServicesFile": "./google-services.json",
+      "package": "com.hyeheee.todayreceipt",
       "adaptiveIcon": {
         "foregroundImage": "./assets/today-icon.png",
         "backgroundColor": "#ffffff"
@@ -48,11 +48,14 @@
             "enableOnBackInvokedCallback": true,
             "extraGCMSenderIds": [],
             "packagingOptions": {
-              "pickFirst": ["**/libjsc.so"]
+              "pickFirst": [
+                "**/libjsc.so"
+              ]
             }
           }
         }
-      ]
+      ],
+      "@react-native-google-signin/google-signin"
     ],
     "extra": {
       "eas": {
