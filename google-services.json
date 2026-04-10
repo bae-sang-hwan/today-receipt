@@ -1,1 +1,47 @@
-{}
+{
+  "project_info": {
+    "project_number": "296991066097",
+    "project_id": "today-receipt",
+    "storage_bucket": "today-receipt.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:296991066097:android:031b16ea185c1e9ab26650",
+        "android_client_info": {
+          "package_name": "com.hyeheee.todayreceipt"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "296991066097-bv65kc2uu562qbfjjk5md55o8cibec35.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.hyeheee.todayreceipt",
+            "certificate_hash": "97c4ea36a0f6b67a800e0ffdd85dd480a2a4cf71"
+          }
+        },
+        {
+          "client_id": "296991066097-2i9s6lddu6afbpidckl8ttt0k064jm6r.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCwhGgnc1KFOIJ0YsKon4LpOv_KtryBJG8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "296991066097-2i9s6lddu6afbpidckl8ttt0k064jm6r.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
