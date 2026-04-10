@@ -5,9 +5,6 @@
   },
   "build": {
     "development": {
-      "env": {
-        "GOOGLE_SERVICES_JSON_BASE64": "@GOOGLE_SERVICES_JSON_BASE64"
-      },
       "developmentClient": true,
       "distribution": "internal"
     },
