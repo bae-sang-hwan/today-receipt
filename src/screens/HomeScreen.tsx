@@ -32,8 +32,11 @@ const HomeScreen = () => {
   const navigation = useNavigation<any>();
 
   const { selectedDate, setSelectedDate } = useDate();
-  const [ receipts, setReceipts ] = useState<any[]>([]);
-  const [ markedDates, setMarkedDates ] = useState<any>({});
+  const [receipts, setReceipts] = useState<any[]>([]);
+  const [markedDates, setMarkedDates] = useState<any>({});
+
+  // 1. 현재 사용자의 UID를 상수로 추출합니다.
+  const userId = auth().currentUser?.uid;
 
   const getKoreanDateString = (date: LocalDate) => {
     const days = ['일', '월', '화', '수', '목', '금', '토'];
@@ -57,13 +60,22 @@ const HomeScreen = () => {
   };
 
   useEffect(() => {
-    if (!auth().currentUser) return;
+    // 2. userId가 없으면 실행하지 않습니다 (로그아웃 직후 등)
+    if (!userId) {
+      setReceipts([]); // 데이터 초기화
+      setMarkedDates({});
+      return;
+    }
+
+    console.log(`구독 시작: ${userId} 사용자의 데이터를 감시합니다.`);
 
     const unsubscribe = firestore()
       .collection("receipts")
-      .where("userId", "==", auth().currentUser!.uid)
+      .where("userId", "==", userId) // 🔴 고정된 UID 사용
       .orderBy("createdAt", "desc")
       .onSnapshot((querySnapshot) => {
+        if (!querySnapshot) return;
+
         const marks: any = {};
         const allData: any[] = [];
 
@@ -72,7 +84,7 @@ const HomeScreen = () => {
           allData.push(data);
 
           const dateStr = data.dateString;
-          const amountNum = parseInt(data.amount.toString().replace(/,/g, '')) || 0;
+          const amountNum = parseInt(data.amount?.toString().replace(/,/g, '') || '0');
 
           if (!marks[dateStr]) {
             marks[dateStr] = { totalAmount: 0 };
@@ -82,10 +94,15 @@ const HomeScreen = () => {
 
         setReceipts(allData);
         setMarkedDates(marks);
+      }, (error) => {
+        console.error("Firestore 리스너 에러:", error);
       });
 
     return () => unsubscribe();
-  }, [selectedDate]);
+
+    // 3. 의존성 배열에 userId를 추가합니다.
+    // 이제 사용자가 바뀌면 이전 구독을 해제하고 새 유저로 다시 구독합니다.
+  }, [userId, selectedDate]);
 
   const filteredList = receipts.filter(item => item.dateString === selectedDate.toString());
 

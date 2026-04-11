@@ -29,11 +29,21 @@ const ReportScreen = () => {
   const [receipts, setReceipts] = useState<any[]>([]);
   const [lastMonthTotal, setLastMonthTotal] = useState(0);
 
-  // 1. 초기 로딩과 업데이트 로딩을 분리합니다.
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
-
   const [randomItem, setRandomItem] = useState<any>(null);
+
+  const [currentUser, setCurrentUser] = useState(auth().currentUser);
+
+  useEffect(() => {
+    // 인증 상태 리스너 등록 (유저 변경 감지용)
+    const subscriber = auth().onAuthStateChanged((user) => {
+      setCurrentUser(user);
+    });
+    return subscriber;
+  }, []);
+
+  const userId = currentUser?.uid;
 
   const changeMonth = (amount: number) => {
     setIsUpdating(true);
@@ -59,9 +69,14 @@ const ReportScreen = () => {
   };
 
   useEffect(() => {
-    if (!auth().currentUser) return;
+    if (!userId) {
+      setReceipts([]);
+      setLastMonthTotal(0);
+      setIsInitialLoading(false);
+      return;
+    }
 
-    const currentUserId = auth().currentUser!.uid;
+    setIsUpdating(true);
 
     // 이번 달 범위
     const startStr = selectedDate.withDayOfMonth(1).toString();
@@ -75,7 +90,7 @@ const ReportScreen = () => {
     // 1. 이번 달 데이터 구독 (실시간)
     const unsubscribe = firestore()
       .collection("receipts")
-      .where("userId", "==", currentUserId)
+      .where("userId", "==", userId)
       .where("dateString", ">=", startStr)
       .where("dateString", "<=", endStr)
       .orderBy("createdAt", "desc")
@@ -90,7 +105,7 @@ const ReportScreen = () => {
     // 2. 지난달 데이터 합계 가져오기 (단발성)
     firestore()
       .collection("receipts")
-      .where("userId", "==", currentUserId)
+      .where("userId", "==", userId)
       .where("dateString", ">=", lastStartStr)
       .where("dateString", "<=", lastEndStr)
       .orderBy("createdAt", "desc")
@@ -101,7 +116,7 @@ const ReportScreen = () => {
       });
 
     return () => unsubscribe();
-  }, [selectedDate]);
+  }, [selectedDate, userId]);
 
   const stats = useMemo(() => {
 
