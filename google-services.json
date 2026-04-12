@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "296991066097-p894k40s65k1sidnkhg0jua49cum6sc3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.hyeheee.todayreceipt",
+            "certificate_hash": "196e35120f82dabe25690da40d0c01f4563e9f5f"
+          }
+        },
+        {
           "client_id": "296991066097-2i9s6lddu6afbpidckl8ttt0k064jm6r.apps.googleusercontent.com",
           "client_type": 3
         }
