@@ -16,6 +16,7 @@ import ModifyScreen from "./src/screens/ModifyScreen";
 import SaveCompleteScreen from "./src/screens/SaveCompleteScreen";
 import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import { enableScreens } from 'react-native-screens';
+import SettingScreen from "./src/screens/SettingScreen";
 
 enableScreens(false);
 
@@ -30,20 +31,27 @@ export default function App() {
 
   useEffect(() => {
     // 1. 로그인 상태 감시자 설정 (가장 정확한 방법)
-    const unsubscribe = auth().onAuthStateChanged((currentUser) => {
-      setUser(currentUser);
-      // 유저 정보가 확정되면 앱 준비 완료로 간주 (필요 시)
+    const unsubscribe = auth().onAuthStateChanged(async (currentUser) => {
+      if (!currentUser) {
+        // 🔴 로그아웃 되어서 currentUser가 null이라면 즉시 다시 익명 로그인 시도
+        console.log("로그아웃 감지: 익명 로그인을 재시도합니다.");
+        try {
+          const newUser = await getOrCreateUser();
+          setUser(newUser);
+        } catch (e) {
+          console.error("재로그인 에러:", e);
+        }
+      } else {
+        // 로그인 상태라면 유저 정보 세팅
+        setUser(currentUser);
+      }
     });
 
     async function prepare() {
       try {
         await Font.loadAsync(Ionicons.font);
-
-        // 2. 익명 로그인 또는 유저 생성 로직 실행
-        // 이미 로그인되어 있다면 authService 내부에서 처리될 것입니다.
-        const loggedInUser = await getOrCreateUser();
-
-        // 1초 대기 (스플래시 체류 시간)
+        // 초기 구동 시 유저 생성 (이미 되어있다면 내부에서 fetch)
+        await getOrCreateUser();
         await new Promise(resolve => setTimeout(resolve, 1000));
       } catch (e) {
         console.warn("초기화 에러:", e);

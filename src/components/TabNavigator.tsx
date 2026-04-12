@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import HomeScreen from "../screens/HomeScreen";
 import AddScreen from "../screens/AddScreen";
 import ReportScreen from "../screens/ReportScreen";
+import SettingScreen from "../screens/SettingScreen";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -22,6 +23,8 @@ const TabNavigator = () => {
             iconName = focused ? 'add-circle' : 'add-circle-outline';
           } else if (route.name === 'report') {
             iconName = focused ? 'stats-chart' : 'stats-chart-outline';
+          } else if (route.name === 'setting') {
+            iconName = focused ? 'settings' : 'settings-outline';
           }
 
           return <Ionicons name={iconName as any} size={size} color={color} />;
@@ -45,6 +48,11 @@ const TabNavigator = () => {
         name="report"
         component={ReportScreen}
         options={{ tabBarLabel: '통계' }}
+      />
+      <Tab.Screen
+        name="setting"
+        component={SettingScreen}
+        options={{ tabBarLabel: '설정' }}
       />
     </Tab.Navigator>
   );
