@@ -6,7 +6,7 @@ import {SafeAreaView} from "react-native-safe-area-context";
 import {GoogleSignin} from "@react-native-google-signin/google-signin";
 
 const SettingsScreen = () => {
-  // 1. 사용자 정보를 상태(state)로 관리합니다.
+
   const [user, setUser] = useState(auth().currentUser);
 
   const googleProfile = user?.providerData.find(p => p.providerId === 'google.com');
@@ -62,10 +62,11 @@ const SettingsScreen = () => {
       <View style={styles.profileCard}>
         {user && (googleProfile || !user.isAnonymous) ? (
           <>
-            <Image
-              source={{ uri: photoURL || 'https://via.placeholder.com/50' }}
-              style={styles.avatar}
-            />
+            {photoURL
+              ? <Image source={{uri: photoURL }}
+                       style={styles.avatar} />
+              : <Image source={require('../../assets/today-icon.png')}
+                       style={styles.avatar} />}
             <View style={styles.userInfo}>
               <Text style={styles.userName}>{displayName}님</Text>
               <Text style={styles.userEmail}>{googleProfile?.email || user?.email}</Text>
@@ -75,7 +76,6 @@ const SettingsScreen = () => {
             </TouchableOpacity>
           </>
         ) : (
-          // ✅ 익명 상태 또는 로그아웃 상태
           <View style={styles.loginContainer}>
             <Text style={styles.loginTitle}>
               {isAnonymous ? "익명 사용자 입니다." : "로그인이 필요합니다."}
@@ -106,7 +106,7 @@ const SettingsScreen = () => {
       </View>
 
       <View style={styles.menuList}>
-        <Text style={styles.menuItem}>앱 버전 1.0.3</Text>
+        <Text style={styles.menuItem}>앱 버전 1.0.1</Text>
       </View>
     </SafeAreaView>
   );

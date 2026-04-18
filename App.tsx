@@ -2,7 +2,7 @@ import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Font from 'expo-font';
 import { Ionicons } from '@expo/vector-icons';
-import { StyleSheet, Text, View } from 'react-native';
+import {Platform, StyleSheet, Text, View} from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import {useCallback, useEffect, useState} from "react";
@@ -16,7 +16,8 @@ import ModifyScreen from "./src/screens/ModifyScreen";
 import SaveCompleteScreen from "./src/screens/SaveCompleteScreen";
 import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import { enableScreens } from 'react-native-screens';
-import SettingScreen from "./src/screens/SettingScreen";
+import * as Notifications from 'expo-notifications';
+import {SchedulableTriggerInputTypes} from "expo-notifications";
 
 enableScreens(false);
 
@@ -24,13 +25,75 @@ SplashScreen.preventAutoHideAsync();
 
 const Stack = createNativeStackNavigator();
 
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+    shouldShowBanner: true, // 알림이 화면 상단에 배너로 뜸
+    shouldShowList: true,   // 알림 센터(드롭다운 목록)에 표시됨
+  }),
+});
+
 export default function App() {
+
+  useEffect(() => {
+    // 앱 실행 시 알림 설정 프로세스 시작
+    configureNotifications();
+  }, []);
+
+  const configureNotifications = async () => {
+    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+
+    let finalStatus = existingStatus;
+
+    if (existingStatus !== 'granted') {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
+    }
+
+    if (finalStatus !== 'granted') {
+      console.log('알림 권한 거부됨');
+      return;
+    }
+
+    // 3. 안드로이드 전용 채널 설정 (중요!)
+    if (Platform.OS === 'android') {
+      await Notifications.setNotificationChannelAsync('default', {
+        name: 'default',
+        importance: Notifications.AndroidImportance.MAX, // 중요도 설정
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#FF231F7C',
+      });
+    }
+
+    // 4. 기존 예약된 알림 모두 삭제 (중복 방지)
+    await Notifications.cancelAllScheduledNotificationsAsync();
+
+    // 5. 매일 20시 알림 예약 함수 호출
+    await scheduleDailyPushNotification();
+  };
+
+  const scheduleDailyPushNotification = async () => {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: "오늘의 영수증 기록하셨나요?",
+        body: '오늘 하루의 소비를 정리하고 감정을 기록해보세요!',
+      },
+      trigger: {
+        type: SchedulableTriggerInputTypes.DAILY,
+        hour: 20,
+        minute: 0,
+        channelId: 'default',
+      } as any,
+    });
+    console.log("매일 20시 알림 예약 완료");
+  };
 
   const [ appIsReady, setAppIsReady ] = useState(false);
   const [ user, setUser ] = useState<FirebaseAuthTypes.User | null>(null);
 
   useEffect(() => {
-    // 1. 로그인 상태 감시자 설정 (가장 정확한 방법)
     const unsubscribe = auth().onAuthStateChanged(async (currentUser) => {
       if (!currentUser) {
         // 🔴 로그아웃 되어서 currentUser가 null이라면 즉시 다시 익명 로그인 시도
@@ -62,7 +125,6 @@ export default function App() {
 
     prepare();
 
-    // 언마운트 시 감시자 해제
     return () => unsubscribe();
   }, []);
 

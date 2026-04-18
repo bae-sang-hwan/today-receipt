@@ -2,7 +2,6 @@ import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import auth from '@react-native-firebase/auth';
 import {Alert} from "react-native";
 
-// 초기 설정 (이 부분은 유지해 주세요)
 GoogleSignin.configure({
   webClientId: '296991066097-2i9s6lddu6afbpidckl8ttt0k064jm6r.apps.googleusercontent.com',
   offlineAccess: true,
