@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import {View, Text, TouchableOpacity, StyleSheet, Image, Alert} from 'react-native';
-import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
+import auth from '@react-native-firebase/auth';
 import { onGoogleButtonPress } from '../context/AuthContext';
 import {SafeAreaView} from "react-native-safe-area-context";
 import {GoogleSignin} from "@react-native-google-signin/google-signin";
+import { deleteUserAccount } from '../api/authService'; // 경로에 맞춰 수정
 
 const SettingsScreen = () => {
 
@@ -39,6 +40,35 @@ const SettingsScreen = () => {
           },
           style: "destructive" // 안드로이드는 동일하지만, iOS에서는 빨간색으로 강조됩니다.
         }
+      ]
+    );
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      "회원 탈퇴",
+      "정말로 탈퇴하시겠습니까? 기록된 모든 데이터가 삭제됩니다.",
+      [
+        { text: "취소", style: "cancel" },
+        {
+          text: "탈퇴하기",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await deleteUserAccount();
+              Alert.alert("탈퇴 완료", "모든 계정 정보가 삭제되었습니다.");
+            } catch (e: any) {
+              if (e.message === 'REAUTH_REQUIRED') {
+                Alert.alert(
+                  "보안 재인증 필요",
+                  "개인정보 보호를 위해 다시 로그인한 직후에만 탈퇴가 가능합니다. 다시 로그인 후 시도해 주세요."
+                );
+              } else {
+                Alert.alert("에러", "탈퇴 처리 중 문제가 발생했습니다.");
+              }
+            }
+          }
+        },
       ]
     );
   };
@@ -107,6 +137,13 @@ const SettingsScreen = () => {
 
       <View style={styles.menuList}>
         <Text style={styles.menuItem}>앱 버전 1.0.1</Text>
+
+        <TouchableOpacity
+          style={styles.deleteButton}
+          onPress={handleDeleteAccount}
+        >
+          <Text style={styles.deleteText}>회원 탈퇴</Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -122,7 +159,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     minHeight: 100,
-    elevation: 3
+    elevation: 3,
   },
   userInfo: { flex: 1 },
   loginContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
@@ -142,7 +179,15 @@ const styles = StyleSheet.create({
   logoutBtn: { padding: 5 },
   logoutText: { color: '#ff4444', fontSize: 13 },
   menuList: { marginTop: 10, paddingHorizontal: 20 },
-  menuItem: { paddingVertical: 18, borderBottomWidth: 1, borderBottomColor: '#eee', color: '#444' }
+  menuItem: { paddingVertical: 18, borderBottomWidth: 1, borderBottomColor: '#eee', color: '#444' },
+
+  deleteButton: {
+    alignItems: 'flex-start',
+  },
+  deleteText: {
+    color: '#ff4d4d',
+    fontWeight: 'bold',
+  },
 });
 
 export default SettingsScreen;
