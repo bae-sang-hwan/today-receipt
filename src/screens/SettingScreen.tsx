@@ -136,7 +136,7 @@ const SettingsScreen = () => {
       </View>
 
       <View style={styles.menuList}>
-        <Text style={styles.menuItem}>앱 버전 1.0.1</Text>
+        <Text style={styles.menuItem}>앱 버전 1.0.2</Text>
 
         <TouchableOpacity
           style={styles.deleteButton}

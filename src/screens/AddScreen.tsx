@@ -14,7 +14,7 @@ import {
   Alert,
   Platform,
   Modal, Animated,
-  KeyboardAvoidingView
+  KeyboardAvoidingView, PermissionsAndroid
 } from 'react-native';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { Ionicons } from '@expo/vector-icons';
@@ -87,12 +87,36 @@ const AddScreen = () => {
 
 // 1. 직접 카메라 촬영 로직
   const openCamera = async () => {
+    // ⚠️ 안드로이드일 경우 런타임 권한 체크
+    if (Platform.OS === 'android') {
+      try {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.CAMERA,
+          {
+            title: "카메라 권한 요청",
+            message: "영수증 사진 촬영을 위해 카메라 권한이 필요합니다.",
+            buttonNeutral: "나중에",
+            buttonNegative: "거부",
+            buttonPositive: "허용",
+          }
+        );
+        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+          Alert.alert("알림", "카메라 권한이 거부되었습니다. 설정에서 권한을 허용해주세요.");
+          return;
+        }
+      } catch (err) {
+        console.warn(err);
+        return;
+      }
+    }
+
+    // 기존 카메라 실행 로직
     launchCamera(
       { mediaType: 'photo', quality: 0.5 },
       (response) => {
         if (response.didCancel) return;
         if (response.errorCode) {
-          Alert.alert('에러', '카메라를 열 수 없습니다.');
+          Alert.alert('에러', `카메라를 열 수 없습니다. (${response.errorMessage})`); // 상세 에러 메시지 출력 추천
           return;
         }
         if (response.assets) {
