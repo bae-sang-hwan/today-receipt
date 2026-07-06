@@ -139,7 +139,8 @@ export default function App() {
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }} onLayout={onLayoutRootView}>
+    <GestureHandlerRootView style={{ flex: 1 }}
+                            onLayout={onLayoutRootView}>
       <DateProvider>
         <SafeAreaProvider>
           <StatusBar style="auto" />

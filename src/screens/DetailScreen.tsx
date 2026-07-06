@@ -1,15 +1,16 @@
-import React, {useEffect, useRef, useState} from 'react';
-import {Alert, Animated, Modal, Platform} from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { Alert, Animated, Modal, Platform } from 'react-native';
 import { StyleSheet, View, Text, Image, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import firestore from '@react-native-firebase/firestore';
-import {DateTimeFormatter, LocalDate} from "@js-joda/core";
+import { DateTimeFormatter, LocalDate } from "@js-joda/core";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const emotionColors: { [key: string]: string } = {
-  happy: '#6200ee',
-  regret: '#e74c3c',
+// 전체 앱과 톤앤매너를 맞춘 소프트 파스텔 컬러 룩업
+const emotionColors: { [key: string]: { bg: string; text: string } } = {
+  happy: { bg: '#f1eefc', text: '#b39ddb' },   // 잘 샀다: 소프트 라벤더
+  regret: { bg: '#fff1f1', text: '#f5a6a6' },  // 후회: 소프트 코랄 파스텔
 };
 
 const stampImages: { [key: string]: any } = {
@@ -18,12 +19,10 @@ const stampImages: { [key: string]: any } = {
 };
 
 const DetailScreen = ({ route, navigation }: any) => {
-
   const { item } = route.params;
   const insets = useSafeAreaInsets();
 
   const [isSheetVisible, setIsSheetVisible] = useState(false);
-
   const stampImage = stampImages[item.emotion] || stampImages.happy;
 
   const translateY = useRef(new Animated.Value(300)).current;
@@ -54,7 +53,6 @@ const DetailScreen = ({ route, navigation }: any) => {
   }, [isSheetVisible]);
 
   const handleEditPress = () => {
-
     setIsSheetVisible(false);
     navigation.navigate('Modify', { item: item });
   };
@@ -88,23 +86,25 @@ const DetailScreen = ({ route, navigation }: any) => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <ScrollView>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      {/* 상단 미니멀 네비게이션 헤더 */}
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.headerButton} onPress={() => navigation.goBack()}>
+          <Ionicons name="chevron-back" size={22} color="#718096" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>지출 상세</Text>
+        <TouchableOpacity style={styles.headerButton} onPress={() => setIsSheetVisible(true)}>
+          <Ionicons name="ellipsis-horizontal" size={20} color="#718096" />
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+
+        {/* 라운드 처리가 들어간 감각적인 이미지 프레임 카드 */}
         <View style={styles.imageContainer}>
           <Image source={{ uri: item.photoURL }} style={styles.image} resizeMode="cover" />
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Ionicons name="chevron-back" size={28} color="#fff" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.moreButton}
-            onPress={() => setIsSheetVisible(true)}
-          >
-            <Ionicons name="ellipsis-vertical" size={24} color="#fff" />
-          </TouchableOpacity>
 
+          {/* 감정 도장 이미지 배치 */}
           <Image
             source={stampImage}
             style={styles.stampImage}
@@ -112,60 +112,70 @@ const DetailScreen = ({ route, navigation }: any) => {
           />
         </View>
 
-        {/* 상세 정보 영역 */}
+        {/* 세련되게 정돈된 정보 레이아웃 컨텐츠 */}
         <View style={styles.content}>
           <Text style={styles.dateText}>
             {getKoreanDateString(LocalDate.parse(item.dateString, DateTimeFormatter.ISO_LOCAL_DATE))}
           </Text>
 
           <View style={styles.row}>
-            <Text style={[styles.emotionBadge, { backgroundColor: emotionColors[item.emotion] }]}>
-              {item.emotion === 'happy' ? '🛍️ "잘 샀다' : '😭 후회'}
-            </Text>
+            <View style={[styles.emotionBadge, { backgroundColor: emotionColors[item.emotion]?.bg || '#f8f9fc' }]}>
+              <Text style={[styles.emotionBadgeText, { color: emotionColors[item.emotion]?.text || '#718096' }]}>
+                {item.emotion === 'happy' ? '🛍️ 잘 샀다' : '😭 후회'}
+              </Text>
+            </View>
             <Text style={styles.amountText}>{Number(item.amount).toLocaleString()}원</Text>
           </View>
 
           <View style={styles.divider} />
 
           <Text style={styles.label}>메모</Text>
-          <Text style={styles.memoText}>
-            {item.memo || "작성된 메모가 없습니다."}
-          </Text>
+          <View style={styles.memoBox}>
+            <Text style={styles.memoText}>
+              {item.memo || "작성된 메모가 없습니다."}
+            </Text>
+          </View>
         </View>
       </ScrollView>
 
+      {/* 바텀 다이얼로그 모달 리디자인 */}
       <Modal
         visible={isSheetVisible}
         transparent={true}
-        animationType="none" // 투명도 애니메이션은 꺼둠 (배경 즉시 Dim 효과)
+        animationType="none"
         onRequestClose={() => setIsSheetVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          {/* 1. 배경을 누르면 닫히는 투명 영역 (Dim) */}
           <TouchableOpacity
             style={StyleSheet.absoluteFill}
             activeOpacity={1}
             onPress={() => setIsSheetVisible(false)}
           />
 
-          {/* 2. 밑에서 올라오는 화이트 시트 (Animated.View) */}
-          <Animated.View style={[styles.sheetContainer, { transform: [{ translateY }], paddingBottom: insets.bottom }]}>
+          <Animated.View style={[styles.sheetContainer, { transform: [{ translateY }], paddingBottom: insets.bottom + 16 }]}>
+            <View style={styles.sheetHandle} />
             <Text style={styles.sheetTitle}>기록 관리</Text>
 
             <TouchableOpacity
               style={styles.sheetButton}
               onPress={handleEditPress}
+              activeOpacity={0.6}
             >
-              <Ionicons name="pencil" size={20} color="#6200ee" />
+              <View style={[styles.sheetIconBox, { backgroundColor: '#faf8ff' }]}>
+                <Ionicons name="pencil" size={18} color="#b39ddb" />
+              </View>
               <Text style={styles.sheetButtonText}>수정하기</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.sheetButton, { borderBottomWidth: 0 }]}
+              style={styles.sheetButton}
               onPress={handleDeletePress}
+              activeOpacity={0.6}
             >
-              <Ionicons name="trash" size={20} color="#ff4757" />
-              <Text style={[styles.sheetButtonText]}>삭제하기</Text>
+              <View style={[styles.sheetIconBox, { backgroundColor: '#fff1f1' }]}>
+                <Ionicons name="trash" size={18} color="#f5a6a6" />
+              </View>
+              <Text style={[styles.sheetButtonText, { color: '#f5a6a6' }]}>삭제하기</Text>
             </TouchableOpacity>
           </Animated.View>
         </View>
@@ -177,91 +187,161 @@ const DetailScreen = ({ route, navigation }: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff'
+    backgroundColor: '#ffffff'
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#edf2f7',
+  },
+  headerButton: {
+    padding: 6,
+  },
+  headerTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#2d3748',
+    letterSpacing: -0.5,
+  },
+  scrollContent: {
+    padding: 24,
   },
   imageContainer: {
     width: '100%',
-    height: 400,
+    height: 340,
     position: 'relative',
+    borderRadius: 24,
+    overflow: 'hidden',
+    backgroundColor: '#f8f9fc',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.04,
+    shadowRadius: 16,
+    elevation: 4,
+  },
+  image: {
+    width: '100%',
+    height: '100%'
   },
   stampImage: {
     position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 150,
-    height: 150,
-    transform: [{ rotate : '-18deg' }]
+    bottom: -10,
+    right: -10,
+    width: 140,
+    height: 140,
+    transform: [{ rotate: '-15deg' }]
   },
-  image: { width: '100%', height: '100%' },
-  backButton: {
-    position: 'absolute',
-    top: 20,
-    left: 20,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    borderRadius: 20,
-    padding: 8
+  content: {
+    paddingTop: 24,
+    paddingHorizontal: 4,
   },
-  moreButton: {
-    position: 'absolute',
-    top: 20,
-    right: 20,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    padding: 8,
-    borderRadius: 20,
-    elevation: 3,        // 안드로이드 그림자
-    shadowColor: '#000', // iOS 그림자
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
+  dateText: {
+    fontSize: 14,
+    color: '#a0aec0',
+    fontWeight: '600',
+    marginBottom: 12
   },
-  content: { padding: 25 },
-  dateText: { fontSize: 14, color: '#888', marginBottom: 10 },
-  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  emotionBadge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, color: '#fff', fontWeight: 'bold', overflow: 'hidden' },
-  amountText: { fontSize: 24, fontWeight: 'bold', color: '#2d3436' },
-  divider: { height: 1, backgroundColor: '#eee', marginVertical: 25 },
-  label: { fontSize: 16, fontWeight: 'bold', color: '#333', marginBottom: 10 },
-  memoText: { fontSize: 16, color: '#636e72', lineHeight: 24 },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center'
+  },
+  emotionBadge: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 10,
+  },
+  emotionBadgeText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  amountText: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#2d3748',
+    letterSpacing: -0.5,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#edf2f7',
+    marginVertical: 24
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#2d3748',
+    marginBottom: 12
+  },
+  memoBox: {
+    backgroundColor: '#f8f9fc',
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#edf2f7',
+  },
+  memoText: {
+    fontSize: 15,
+    color: '#4a5568',
+    lineHeight: 22,
+    fontWeight: '500',
+  },
 
+  // 일관성 있게 구성된 바텀 시트 디자인
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: 'rgba(26, 32, 44, 0.4)',
     justifyContent: 'flex-end',
   },
   sheetContainer: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingHorizontal: 20,
-    paddingTop: 15,
+    backgroundColor: '#ffffff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 24,
+    paddingTop: 12,
     width: '100%',
-
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
     elevation: 20,
   },
+  sheetHandle: {
+    width: 36,
+    height: 4,
+    backgroundColor: '#e2e8f0',
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: 16,
+  },
   sheetTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginTop: 10,
-    marginBottom: 20,
-    color: '#333',
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 16,
+    color: '#2d3748',
   },
   sheetButton: {
     flexDirection: 'row',
     alignItems: 'center',
     width: '100%',
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f5f5f5',
+    paddingVertical: 12,
+  },
+  sheetIconBox: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
   },
   sheetButtonText: {
-    fontSize: 16,
-    marginLeft: 15,
-    color: '#333',
-    fontWeight: '500',
+    fontSize: 15,
+    color: '#4a5568',
+    fontWeight: '600',
   },
 });
 

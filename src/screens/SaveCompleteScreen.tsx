@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View, Text, Image, Animated, TouchableOpacity, BackHandler, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -11,9 +11,7 @@ const stampImages: { [key: string]: any } = {
 };
 
 const SaveCompleteScreen = ({ route }: any) => {
-
   const navigation = useNavigation<any>();
-
   const [isImageLoaded, setIsImageLoaded] = useState(false);
 
   const { photoURL, emotion } = route.params;
@@ -22,7 +20,7 @@ const SaveCompleteScreen = ({ route }: any) => {
   const stampOpacity = useRef(new Animated.Value(0)).current;
   const stampScale = useRef(new Animated.Value(8)).current;
 
-  // ✅ 애니메이션 실행 함수를 별도로 분리
+  // ✅ 오리지널 애니메이션 + 햅틱 로직 완벽 유지
   const startStampAnimation = () => {
     Animated.sequence([
       Animated.delay(300),
@@ -61,10 +59,16 @@ const SaveCompleteScreen = ({ route }: any) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <Ionicons name="checkmark-circle-outline" size={70} color="#2ecc71" style={styles.successIcon} />
+
+        {/* 파스텔 라벤더 서클 아이콘 컨테이너 */}
+        <View style={styles.successIconBox}>
+          <Ionicons name="checkmark" size={32} color="#b39ddb" />
+        </View>
+
         <Text style={styles.title}>기록 완료!</Text>
         <Text style={styles.subtitle}>오늘의 소비가 성공적으로 기록되었습니다.</Text>
 
+        {/* 인스타 감성의 라운디드 이미지 액자 */}
         <View style={styles.imageWrapper}>
           <Image
             source={{ uri: photoURL }}
@@ -76,29 +80,32 @@ const SaveCompleteScreen = ({ route }: any) => {
             }}
           />
 
+          {/* 애니메이션이 적용되는 오리지널 스탬프 뷰 */}
           <Animated.Image
             source={stampImage}
             style={[
               styles.stampImage,
               {
                 opacity: stampOpacity,
-                transform: [{ scale: stampScale }, { rotate: '-18deg' }],
+                transform: [{ scale: stampScale }, { rotate: '-15deg' }], // 살짝 덜 꺾이게 트렌디하게 보정
               },
             ]}
             resizeMode="contain"
           />
 
           {!isImageLoaded && (
-            <View style={[StyleSheet.absoluteFill, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#f5f5f5' }]}>
-              <Text style={{color: '#999'}}>사진 불러오는 중...</Text>
+            <View style={[StyleSheet.absoluteFill, styles.loadingOverlay]}>
+              <Text style={styles.loadingText}>사진 불러오는 중...</Text>
             </View>
           )}
         </View>
 
+        {/* 하단 메인 플랫 버튼 */}
         <TouchableOpacity
           style={[styles.homeButton, { opacity: isImageLoaded ? 1 : 0.5 }]}
           onPress={handleGoHome}
           disabled={!isImageLoaded}
+          activeOpacity={0.8}
         >
           <Text style={styles.homeButtonText}>확인</Text>
         </TouchableOpacity>
@@ -108,38 +115,98 @@ const SaveCompleteScreen = ({ route }: any) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  content: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 20 },
-  successIcon: { marginBottom: 15 },
-  title: { fontSize: 22, fontWeight: 'bold', color: '#333', marginBottom: 8 },
-  subtitle: { fontSize: 15, color: '#636e72', marginBottom: 25, textAlign: 'center' },
+  container: {
+    flex: 1,
+    backgroundColor: '#ffffff'
+  },
+  content: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24
+  },
+  successIconBox: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: '#faf8ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#f1eefc',
+    marginBottom: 20,
+    shadowColor: '#b39ddb',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#2d3748',
+    marginBottom: 8,
+    letterSpacing: -0.5,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: '#718096',
+    marginBottom: 32,
+    textAlign: 'center',
+    fontWeight: '500',
+  },
   imageWrapper: {
     width: '85%',
-    height: 380,
-    borderRadius: 18,
+    height: 360,
+    borderRadius: 24,
     overflow: 'hidden',
     position: 'relative',
-    marginBottom: 40,
-    elevation: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.25, shadowRadius: 12,
+    marginBottom: 44,
+    backgroundColor: '#f8f9fc',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.05,
+    shadowRadius: 20,
+    elevation: 6,
   },
-  receiptImage: { width: '100%', height: '100%' },
-
+  receiptImage: {
+    width: '100%',
+    height: '100%'
+  },
   stampImage: {
     position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 200,
-    height: 200,
+    bottom: -10,
+    right: -10,
+    width: 160,
+    height: 160,
   },
-
+  loadingOverlay: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fc'
+  },
+  loadingText: {
+    color: '#a0aec0',
+    fontSize: 13,
+    fontWeight: '500',
+  },
   homeButton: {
-    backgroundColor: '#6200ee',
+    backgroundColor: '#b39ddb',
+    width: '85%',
     paddingVertical: 18,
-    paddingHorizontal: 70,
-    borderRadius: 14,
-    elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 4,
+    borderRadius: 16,
+    alignItems: 'center',
+    shadowColor: '#b39ddb',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 4,
   },
-  homeButtonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
+  homeButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '700'
+  },
 });
 
 export default SaveCompleteScreen;

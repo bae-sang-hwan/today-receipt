@@ -1,44 +1,37 @@
 import React, { useState, useEffect } from 'react';
-import {View, Text, TouchableOpacity, StyleSheet, Image, Alert} from 'react-native';
+import {View, Text, TouchableOpacity, StyleSheet, Image, Alert, ScrollView} from 'react-native';
 import auth from '@react-native-firebase/auth';
 import { onGoogleButtonPress } from '../context/AuthContext';
-import {SafeAreaView} from "react-native-safe-area-context";
-import {GoogleSignin} from "@react-native-google-signin/google-signin";
-import { deleteUserAccount } from '../api/authService'; // 경로에 맞춰 수정
+import { SafeAreaView } from "react-native-safe-area-context";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import { deleteUserAccount } from '../api/authService';
+import { Ionicons } from '@expo/vector-icons';
 
 const SettingsScreen = () => {
-
   const [user, setUser] = useState(auth().currentUser);
 
   const googleProfile = user?.providerData.find(p => p.providerId === 'google.com');
 
-  // 화면에 표시할 데이터 결정 (구글 정보가 있으면 구글 정보를, 없으면 유저 기본 정보를 사용)
   const displayName = googleProfile?.displayName || user?.displayName || '사용자';
   const photoURL = googleProfile?.photoURL || user?.photoURL;
 
   const handleLogout = async () => {
     Alert.alert(
-      "로그아웃", // 제목
-      "정말 로그아웃 하시겠습니까? 로그아웃 후에는 다시 익명 계정으로 시작됩니다.", // 메시지
+      "로그아웃",
+      "정말 로그아웃 하시겠습니까? 로그아웃 후에는 다시 익명 계정으로 시작됩니다.",
       [
-        {
-          text: "취소",
-          onPress: () => console.log("로그아웃 취소"),
-          style: "cancel"
-        },
+        { text: "취소", style: "cancel" },
         {
           text: "확인",
           onPress: async () => {
             try {
-              // 구글 세션과 파이어베이스 세션을 모두 정리
               await GoogleSignin.signOut();
               await auth().signOut();
-              console.log("로그아웃 완료 및 익명 전환 대기");
             } catch (error) {
               console.error("로그아웃 중 에러 발생:", error);
             }
           },
-          style: "destructive" // 안드로이드는 동일하지만, iOS에서는 빨간색으로 강조됩니다.
+          style: "destructive"
         }
       ]
     );
@@ -74,120 +67,276 @@ const SettingsScreen = () => {
   };
 
   useEffect(() => {
-    // 2. 인증 상태 변경 리스너 등록
-    // 사용자가 로그인하거나, 로그아웃하거나, 계정을 연결할 때마다 실행됩니다.
     const subscriber = auth().onAuthStateChanged((newUser) => {
       setUser(newUser);
     });
-
-    return subscriber; // 컴포넌트 언마운트 시 리스너 해제
+    return subscriber;
   }, []);
 
-  // 구글 연동 여부 확인
-  const isGoogleLinked = user?.providerData.some(p => p.providerId === 'google.com');
   const isAnonymous = user && user.isAnonymous;
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <View style={styles.profileCard}>
-        {user && (googleProfile || !user.isAnonymous) ? (
-          <>
-            {photoURL
-              ? <Image source={{uri: photoURL }}
-                       style={styles.avatar} />
-              : <Image source={require('../../assets/today-icon.png')}
-                       style={styles.avatar} />}
-            <View style={styles.userInfo}>
-              <Text style={styles.userName}>{displayName}님</Text>
-              <Text style={styles.userEmail}>{googleProfile?.email || user?.email}</Text>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      {/* 타이틀 헤더 */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>설정</Text>
+      </View>
+
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+
+        {/* 프로필 / 로그인 카드 카드 */}
+        <View style={styles.profileCard}>
+          {user && (googleProfile || !user.isAnonymous) ? (
+            <View style={styles.profileWrapper}>
+              {photoURL ? (
+                <Image source={{ uri: photoURL }} style={styles.avatar} />
+              ) : (
+                <View style={styles.defaultAvatar}>
+                  <Ionicons name="person" size={24} color="#b39ddb" />
+                </View>
+              )}
+              <View style={styles.userInfo}>
+                <Text style={styles.userName}>{displayName}님</Text>
+                <Text style={styles.userEmail}>{googleProfile?.email || user?.email}</Text>
+              </View>
+              <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn} activeOpacity={0.7}>
+                <Text style={styles.logoutText}>로그아웃</Text>
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>
-              <Text style={styles.logoutText}>로그아웃</Text>
-            </TouchableOpacity>
-          </>
-        ) : (
-          <View style={styles.loginContainer}>
-            <Text style={styles.loginTitle}>
-              {isAnonymous ? "익명 사용자 입니다." : "로그인이 필요합니다."}
-            </Text>
-            <Text style={styles.loginSubTitle}>
-              구글 계정과 연결하면
-            </Text>
-            <Text style={styles.loginSubTitle}>
-              앱을 삭제하더라도 데이터가 저장됩니다.
-            </Text>
-            <TouchableOpacity
-              style={styles.googleBtn}
-              onPress={async () => {
-                try {
-                  await onGoogleButtonPress();
+          ) : (
+            <View style={styles.loginContainer}>
+              <View style={styles.anonymousBadge}>
+                <Text style={styles.anonymousBadgeText}>
+                  {isAnonymous ? "🔒 익명 안심 모드 이용 중" : "로그인이 필요합니다"}
+                </Text>
+              </View>
+              <Text style={styles.loginTitle}>소중한 지출 기록을 동기화하세요</Text>
+              <Text style={styles.loginSubTitle}>
+                구글 계정과 연결하면 앱을 삭제하거나 휴대폰을 바꿔도 기록이 안전하게 보관됩니다.
+              </Text>
 
-                  setUser(auth().currentUser);
+              <TouchableOpacity
+                style={styles.googleBtn}
+                activeOpacity={0.8}
+                onPress={async () => {
+                  try {
+                    await onGoogleButtonPress();
+                    setUser(auth().currentUser);
+                  } catch (e) {
+                    console.error("연결 중 오류 발생", e);
+                  }
+                }}
+              >
+                <Ionicons name="logo-google" size={16} color="#b39ddb" style={{ marginRight: 8 }} />
+                <Text style={styles.googleBtnText}>Google 계정 연결하기</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
 
-                } catch (e) {
-                  console.error("연결 중 오류 발생", e);
-                }
-              }}
-            >
-              <Text style={styles.googleBtnText}>Google 계정 연결하기</Text>
-            </TouchableOpacity>
+        {/* 일반 메뉴 리스트 */}
+        <Text style={styles.sectionLabel}>앱 정보</Text>
+        <View style={styles.menuCard}>
+          <View style={styles.menuItem}>
+            <Text style={styles.menuItemText}>현재 버전</Text>
+            <Text style={styles.versionText}>1.0.2</Text>
           </View>
-        )}
-      </View>
 
-      <View style={styles.menuList}>
-        <Text style={styles.menuItem}>앱 버전 1.0.2</Text>
+          <View style={styles.menuDivider} />
 
-        <TouchableOpacity
-          style={styles.deleteButton}
-          onPress={handleDeleteAccount}
-        >
-          <Text style={styles.deleteText}>회원 탈퇴</Text>
-        </TouchableOpacity>
-      </View>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={handleDeleteAccount}
+            activeOpacity={0.6}
+          >
+            <Text style={[styles.menuItemText, { color: '#f5a6a6' }]}>회원 탈퇴</Text>
+            <Ionicons name="chevron-forward" size={16} color="#cbd5e0" />
+          </TouchableOpacity>
+        </View>
+
+      </ScrollView>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
+  container: {
+    flex: 1,
+    backgroundColor: '#f8f9fc'
+  },
+  header: {
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#edf2f7',
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#2d3748',
+    letterSpacing: -0.5,
+  },
+  scrollContent: {
+    padding: 24
+  },
+
+  // 프로필 메인 카드 스타일링
   profileCard: {
-    backgroundColor: '#fff',
-    padding: 20,
-    margin: 15,
-    borderRadius: 15,
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    padding: 24,
+    marginBottom: 28,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.02,
+    shadowRadius: 12,
+    elevation: 2,
+  },
+  profileWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    minHeight: 100,
-    elevation: 3,
   },
-  userInfo: { flex: 1 },
-  loginContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  loginTitle: { fontSize: 16, fontWeight: 'bold', color: '#333', marginBottom: 12 },
-  loginSubTitle: { fontSize: 12, color: '#888', textAlign: 'center' },
-  googleBtn: {
-    backgroundColor: '#4285F4',
-    paddingHorizontal: 25,
-    paddingVertical: 12,
+  avatar: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    marginRight: 16
+  },
+  defaultAvatar: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#faf8ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+    borderWidth: 1,
+    borderColor: '#f1eefc',
+  },
+  userInfo: {
+    flex: 1
+  },
+  userName: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#2d3748',
+    marginBottom: 2,
+  },
+  userEmail: {
+    color: '#a0aec0',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  logoutBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 8,
-    marginTop: 12
+    backgroundColor: '#fff1f1',
   },
-  googleBtnText: { color: '#fff', fontWeight: 'bold' },
-  avatar: { width: 50, height: 50, borderRadius: 25, marginRight: 15 },
-  userName: { fontSize: 18, fontWeight: 'bold' },
-  userEmail: { color: '#888', fontSize: 14 },
-  logoutBtn: { padding: 5 },
-  logoutText: { color: '#ff4444', fontSize: 13 },
-  menuList: { marginTop: 10, paddingHorizontal: 20 },
-  menuItem: { paddingVertical: 18, borderBottomWidth: 1, borderBottomColor: '#eee', color: '#444' },
+  logoutText: {
+    color: '#f5a6a6',
+    fontSize: 12,
+    fontWeight: '700',
+  },
 
-  deleteButton: {
-    alignItems: 'flex-start',
+  // 미연동/익명 상태 로그인 유도 뷰 구조
+  loginContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
   },
-  deleteText: {
-    color: '#ff4d4d',
-    fontWeight: 'bold',
+  anonymousBadge: {
+    backgroundColor: '#faf8ff',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#f1eefc',
+    marginBottom: 14,
   },
+  anonymousBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#b39ddb',
+  },
+  loginTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#2d3748',
+    marginBottom: 8,
+    textAlign: 'center'
+  },
+  loginSubTitle: {
+    fontSize: 13,
+    color: '#718096',
+    textAlign: 'center',
+    lineHeight: 18,
+    fontWeight: '400',
+    paddingHorizontal: 10,
+    marginBottom: 20,
+  },
+  googleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#faf8ff',
+    borderWidth: 1,
+    borderColor: '#f1eefc',
+    width: '100%',
+    paddingVertical: 14,
+    borderRadius: 14,
+    shadowColor: '#b39ddb',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 1,
+  },
+  googleBtnText: {
+    color: '#b39ddb',
+    fontWeight: '700',
+    fontSize: 14,
+  },
+
+  // 하단 메뉴 대시보드 카드 스타일링
+  sectionLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#a0aec0',
+    marginBottom: 10,
+    marginLeft: 4,
+    textTransform: 'uppercase',
+  },
+  menuCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    paddingHorizontal: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.02,
+    shadowRadius: 12,
+    elevation: 2,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 18,
+  },
+  menuItemText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#4a5568',
+  },
+  versionText: {
+    fontSize: 14,
+    color: '#a0aec0',
+    fontWeight: '600',
+  },
+  menuDivider: {
+    height: 1,
+    backgroundColor: '#edf2f7',
+  }
 });
 
 export default SettingsScreen;
