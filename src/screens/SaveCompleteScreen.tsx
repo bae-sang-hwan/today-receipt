@@ -1,9 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View, Text, Image, Animated, TouchableOpacity, BackHandler, Platform } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+// ⭐️ useSafeAreaInsets 추가 import
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useNavigation, CommonActions } from '@react-navigation/native';
+import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
+
+const adUnitId = TestIds.BANNER;
 
 const stampImages: { [key: string]: any } = {
   happy: require('../../assets/stamp_happy.png'),
@@ -14,13 +18,15 @@ const SaveCompleteScreen = ({ route }: any) => {
   const navigation = useNavigation<any>();
   const [isImageLoaded, setIsImageLoaded] = useState(false);
 
+  // ⭐️ 기기별 하단 내비게이션 바 높이를 동적으로 계산하는 훅
+  const insets = useSafeAreaInsets();
+
   const { photoURL, emotion } = route.params;
   const stampImage = stampImages[emotion] || stampImages.happy;
 
   const stampOpacity = useRef(new Animated.Value(0)).current;
   const stampScale = useRef(new Animated.Value(8)).current;
 
-  // ✅ 오리지널 애니메이션 + 햅틱 로직 완벽 유지
   const startStampAnimation = () => {
     Animated.sequence([
       Animated.delay(300),
@@ -57,6 +63,7 @@ const SaveCompleteScreen = ({ route }: any) => {
   }, []);
 
   return (
+    // 💡 edges에서 bottom을 다시 제외하지 않고 기본값으로 둡니다.
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
 
@@ -87,7 +94,7 @@ const SaveCompleteScreen = ({ route }: any) => {
               styles.stampImage,
               {
                 opacity: stampOpacity,
-                transform: [{ scale: stampScale }, { rotate: '-15deg' }], // 살짝 덜 꺾이게 트렌디하게 보정
+                transform: [{ scale: stampScale }, { rotate: '-15deg' }],
               },
             ]}
             resizeMode="contain"
@@ -110,6 +117,22 @@ const SaveCompleteScreen = ({ route }: any) => {
           <Text style={styles.homeButtonText}>확인</Text>
         </TouchableOpacity>
       </View>
+
+      {/* ⭐️ 기기 하단 내비게이션 바 높이만큼 paddingBottom을 동적으로 주입 */}
+      <View style={[
+        styles.bottomAdContainer,
+      ]}>
+        <BannerAd
+          unitId={adUnitId}
+          size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+          requestOptions={{
+            requestNonPersonalizedAdsOnly: true,
+          }}
+          onAdFailedToLoad={(error) => {
+            console.error('완료 화면 광고 로드 실패: ', error);
+          }}
+        />
+      </View>
     </SafeAreaView>
   );
 };
@@ -123,7 +146,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 24
+    padding: 24,
   },
   successIconBox: {
     width: 68,
@@ -206,6 +229,12 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '700'
+  },
+  bottomAdContainer: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'transparent', // 👈 배경을 투명하게 설정
   },
 });
 

@@ -43,6 +43,12 @@
       "@react-native-firebase/auth",
       "expo-font",
       [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-3940256099942544~3347511713"
+        }
+      ],
+      [
         "expo-image-picker",
         {
           "photosPermission": "사용자가 사진을 선택할 수 있도록 앨범에 접근합니다.",

@@ -12,6 +12,9 @@ import { useNavigation } from "@react-navigation/native";
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import Svg, { Path } from 'react-native-svg';
 
+// ⭐️ 추가: 구글 애드몹 배너 관련 컴포넌트 및 테스트 ID 임포트
+import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
+
 const { width } = Dimensions.get('window');
 
 LocaleConfig.locales['fr'] = {
@@ -27,6 +30,9 @@ const emotionColors: { [key: string]: string } = {
   happy: '#b39ddb',
   regret: '#f5a6a6',
 };
+
+// ⭐️ 추가: 구글 애드몹 배너 ID 세팅 (개발 중에는 무조건 TestIds를 써야 계정 정지를 피합니다)
+const adUnitId = __DEV__ ? TestIds.BANNER : 'ca-app-pub-xxxxxxxxxxxxxxxx/xxxxxxxxxx';
 
 const HomeScreen = () => {
   const navigation = useNavigation<any>();
@@ -123,16 +129,13 @@ const HomeScreen = () => {
           setSelectedDate(selectedDate);
         }}
 
-        // 2. HTML 내비게이션 버튼과 매칭되는 깔끔한 커스텀 화살표 렌더링 추가
         renderArrow={(direction) => (
           <View style={styles.arrowButtonContainer}>
             {direction === 'left' ? (
-              // HTML 이전달 화살표 (<) 형태 적용
               <Svg width="16" height="16" viewBox="0 0 24 24" fill="#a0aec0">
                 <Path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
               </Svg>
             ) : (
-              // HTML 다음달 화살표 (>) 형태 적용
               <Svg width="16" height="16" viewBox="0 0 24 24" fill="#a0aec0">
                 <Path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" />
               </Svg>
@@ -193,6 +196,18 @@ const HomeScreen = () => {
         }}
       />
 
+      {/*광고영역*/}
+      <View style={styles.calendarAdContainer}>
+        <BannerAd
+          unitId={adUnitId}
+          size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+          requestOptions={{
+            requestNonPersonalizedAdsOnly: true,
+          }}
+          onAdFailedToLoad={(error) => console.error(error)}
+        />
+      </View>
+
       {/* 하단 상세 내역 피드 영역 */}
       <PanGestureHandler onHandlerStateChange={onGestureEvent}>
         <View style={styles.detailsContainer}>
@@ -208,7 +223,7 @@ const HomeScreen = () => {
           <FlatList
             data={filteredList}
             keyExtractor={(item) => item.id}
-            contentContainerStyle={{ paddingBottom: 30 }}
+            contentContainerStyle={{ paddingBottom: 16 }} // 광고 마진을 위해 살짝 패딩 가다듬기
             showsVerticalScrollIndicator={false}
             ListEmptyComponent={
               <View style={styles.emptyState}>
@@ -257,14 +272,19 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     backgroundColor: '#ffffff',
   },
+  calendarAdContainer: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 10,
+    backgroundColor: 'transparent', // 👈 배경을 투명하게 설정
+  },
   headerDateText: {
     fontSize: 19,
     fontWeight: '700',
     color: '#2d3748',
     letterSpacing: -0.5,
   },
-
-  // 3. HTML 동그라미 화살표 컨테이너 디자인 미러링 (.nav-btn 대응)
   arrowButtonContainer: {
     width: 32,
     height: 32,
@@ -273,7 +293,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'transparent',
   },
-
   dayContainer: {
     width: 38,
     height: 38,
@@ -307,7 +326,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#a5d6a7',
     borderRadius: 2,
   },
-
   detailsContainer: {
     flex: 1,
     backgroundColor: '#f8f9fc',
@@ -341,7 +359,6 @@ const styles = StyleSheet.create({
     color: '#b39ddb',
     fontWeight: '700',
   },
-
   card: {
     flexDirection: 'row',
     backgroundColor: '#ffffff',
@@ -384,7 +401,6 @@ const styles = StyleSheet.create({
     color: '#a0aec0',
     lineHeight: 18
   },
-
   emptyState: {
     flex: 1,
     alignItems: 'center',
@@ -417,6 +433,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 22,
   },
+
+  // ⭐️ 추가: 배너 광고를 깔끔하게 정돈하는 고정 컨테이너 스타일 세팅
+  adContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    paddingVertical: 8,
+    backgroundColor: 'transparent',
+  }
 });
 
 export default HomeScreen;

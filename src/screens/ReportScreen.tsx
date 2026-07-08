@@ -10,8 +10,13 @@ import { LocalDate, DateTimeFormatter } from "@js-joda/core";
 import { PanGestureHandler, State } from "react-native-gesture-handler";
 import { Image } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
+// ⭐️ 구글 모바일 광고 라이브러리 추가
+import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
 
 const { width } = Dimensions.get('window');
+
+// 💡 상단 띠 배너 광고 단위 ID (테스트용 ID)
+const adUnitId = TestIds.BANNER;
 
 const REGRET_ITEMS = [
   { id: 1, name: '뜨끈한 국밥', price: 10000, unit: '그릇', icon: 'restaurant-outline' as any, message: '더 먹을 수 있었어요!' },
@@ -200,6 +205,20 @@ const ReportScreen = () => {
         <View style={{ width: 32 }} />
       </View>
 
+      {/* ⭐️ [추가] 상단 헤더 바로 밑에 고정되는 100% 반응형 띠 배너 광고 영역 */}
+      <View style={styles.topAdContainer}>
+        <BannerAd
+          unitId={adUnitId}
+          size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+          requestOptions={{
+            requestNonPersonalizedAdsOnly: true,
+          }}
+          onAdFailedToLoad={(error) => {
+            console.error('리포트 상단 광고 로드 실패: ', error);
+          }}
+        />
+      </View>
+
       <PanGestureHandler
         onHandlerStateChange={onHandleMonth}
         activeOffsetX={[-10, 10]}
@@ -277,7 +296,7 @@ const ReportScreen = () => {
               </View>
             </View>
 
-            {/* 🛠️ [리디자인 핵심] 영수증 모양을 빼고 초깔끔 플랫 카드로 변경된 리포트 */}
+            {/* 영수증 모양을 빼고 초깔끔 플랫 카드로 변경된 리포트 */}
             <View style={styles.reportCard}>
               <View style={styles.reportHeader}>
                 <Text style={styles.reportTitle}>이 돈이면 차라리...</Text>
@@ -339,8 +358,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 14,
     backgroundColor: '#ffffff',
+    // 💡 아래 광고 배너와의 경계를 위해 구분선을 제거하거나 연하게 제어 가능
     borderBottomWidth: 1,
     borderBottomColor: '#edf2f7',
+  },
+  // ⭐️ 추가: 상단 광고 레이아웃 전용 스타일
+  topAdContainer: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ffffff', // 헤더와 끊김없이 매끄럽게 흐르도록 흰색 배경 처리
+    paddingBottom: 2,
+    borderBottomWidth: 1,
+    borderBottomColor: '#edf2f7', // 광고 밑으로 바로 리포트 콘텐츠 경계 설정
   },
   backButton: {
     padding: 4,
@@ -364,7 +394,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   scrollContent: {
-    padding: 24
+    // 💡 상단에 광고 배너가 새로 들어왔으니 첫 카드와의 상단 여백을 24 -> 16으로 살짝 조절
+    paddingTop: 16,
+    paddingHorizontal: 24,
+    paddingBottom: 24,
   },
 
   // 상단 최고 지출 요약형 카드
@@ -511,7 +544,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#edf2f7',
   },
 
-  // ⭐️ [변경됨] 심플 플랫 형태로 변경된 하단 리포트 카드 디자인
+  // 심플 플랫 형태로 변경된 하단 리포트 카드 디자인
   reportCard: {
     backgroundColor: '#ffffff',
     borderRadius: 20,
