@@ -1,21 +1,22 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
-import { Platform } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context'; // 하단 여백 자동 계산용
 import HomeScreen from "../screens/HomeScreen";
 import AddScreen from "../screens/AddScreen";
 import ReportScreen from "../screens/ReportScreen";
 import SettingScreen from "../screens/SettingScreen";
 
 const Tab = createBottomTabNavigator();
-const Stack = createNativeStackNavigator();
 
 const TabNavigator = () => {
+  const insets = useSafeAreaInsets(); // 디바이스별 하단 바 높이 가저오기
 
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color, size }) => {
+        tabBarIcon: ({ focused, color }) => {
           let iconName;
 
           // HTML 테마에 부합하도록 정밀한 Ionicons 아이콘 세팅 매칭
@@ -32,27 +33,34 @@ const TabNavigator = () => {
           // HTML 규격에 맞는 아이콘 크기 (22px) 강제 지정
           return <Ionicons name={iconName as any} size={22} color={color} />;
         },
-        // HTML 테마 반영: 활성화 라벤더 파스텔, 비활성화 소프트 그레이
+        // 2차 프리미엄 파스텔 톤 매칭 (#626fe6와 소프트 그레이 #b0b8c1)
         tabBarActiveTintColor: '#b39ddb',
         tabBarInactiveTintColor: '#a0aec0',
         headerShown: false,
 
-        // 부드러운 하단 탭바 컨테이너 스타일링 (HTML 명세 반영)
+        // 하단 디바이스 바 가림 해결 및 스타일 고도화
         tabBarStyle: {
           backgroundColor: '#ffffff',
           borderTopWidth: 1,
-          borderTopColor: '#edf2f7',
-          height: Platform.OS === 'ios' ? 88 : 76, // iOS 기기의 노치 여백 확보 및 기준 높이 76px 설정
-          paddingBottom: Platform.OS === 'ios' ? 24 : 12, // 감성적인 하단 패딩 배치
+          borderTopColor: '#f1f3f5',
+
+          // 고정 높이 대신 디바이스 고유 하단 여백(insets.bottom)을 합산하여 가림 방지
+          height: 64 + (insets.bottom > 0 ? insets.bottom : 12),
+          paddingBottom: insets.bottom > 0 ? insets.bottom : 12,
           paddingTop: 8,
-          boxShadow: 'none', // 하단 내비게이션 바의 그림자 최소화
+
+          // 그림자 은은하게 처리
+          shadowColor: '#000000',
+          shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: 0.02,
+          shadowRadius: 12,
           elevation: 0,
         },
-        // 하단 텍스트 탭바 라벨 세부 서식 변경
+        // 하단 텍스트 라벨 스타일 정의 (2차 명세 반영)
         tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '600', // HTML의 font-weight: 600 반영
-          marginTop: 2,
+          fontSize: 12,
+          fontWeight: '700', // 2차 프리미엄 700 반영
+          marginTop: 4,
         }
       })}
     >
@@ -79,5 +87,19 @@ const TabNavigator = () => {
     </Tab.Navigator>
   );
 };
+
+// 2차 리디자인 마이크로 인터랙션을 위한 스타일시트 추가
+const styles = StyleSheet.create({
+  iconWrapper: {
+    paddingVertical: 4,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  iconWrapperActive: {
+    backgroundColor: '#eeefff', // 2차 리디자인에서 제공한 선택 메뉴 전용 소프트 캡슐 배경
+  },
+});
 
 export default TabNavigator;
