@@ -298,12 +298,12 @@ const AddScreen = () => {
           </Text>
           <View style={styles.emotionRow}>
             <EmotionButton type="happy"
-                           label="🛍️ 잘 샀다"
+                           label="🛍️ 잘 샀다 "
                            selected={emotion === 'happy'}
                            onPress={() => setEmotion('happy')} />
             <View style={{ width: 12 }} />
             <EmotionButton type="regret"
-                           label="😭 후회"
+                           label="😭 후회 "
                            selected={emotion === 'regret'}
                            onPress={() => setEmotion('regret')} />
           </View>

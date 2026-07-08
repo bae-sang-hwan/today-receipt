@@ -121,7 +121,7 @@ const DetailScreen = ({ route, navigation }: any) => {
           <View style={styles.row}>
             <View style={[styles.emotionBadge, { backgroundColor: emotionColors[item.emotion]?.bg || '#f8f9fc' }]}>
               <Text style={[styles.emotionBadgeText, { color: emotionColors[item.emotion]?.text || '#718096' }]}>
-                {item.emotion === 'happy' ? '🛍️ 잘 샀다' : '😭 후회'}
+                {item.emotion === 'happy' ? '🛍️ 잘 샀다 ' : '😭 후회 '}
               </Text>
             </View>
             <Text style={styles.amountText}>{Number(item.amount).toLocaleString()}원</Text>

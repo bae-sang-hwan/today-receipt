@@ -264,14 +264,14 @@ const ReportScreen = () => {
 
               <View style={styles.emotionGrid}>
                 <View style={styles.emotionItem}>
-                  <Text style={styles.emotionLabel}>🛍️ 잘 샀다</Text>
+                  <Text style={styles.emotionLabel}>🛍️ 잘 샀다 </Text>
                   <Text style={styles.emotionValue}>{stats.happyTotal.toLocaleString()}원</Text>
                 </View>
 
                 <View style={styles.verticalDivider} />
 
                 <View style={styles.emotionItem}>
-                  <Text style={styles.emotionLabel}>🫠 후회</Text>
+                  <Text style={styles.emotionLabel}>🫠 후회 </Text>
                   <Text style={styles.emotionValue}>{stats.regretTotal.toLocaleString()}원</Text>
                 </View>
               </View>

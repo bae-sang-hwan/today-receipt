@@ -230,7 +230,7 @@ const HomeScreen = () => {
                 <View style={styles.cardContent}>
                   <View style={styles.cardHeader}>
                     <Text style={[styles.emotionText, { color: emotionColors[item.emotion] || '#4a5568' }]}>
-                      {item.emotion === 'happy' ? '🛍️ 잘 샀다' : '🫠 후회'}
+                      {item.emotion === 'happy' ? '🛍️ 잘 샀다 ' : '🫠 후회 '}
                     </Text>
                     <Text style={styles.amountText}>{Number(item.amount).toLocaleString()}원</Text>
                   </View>
