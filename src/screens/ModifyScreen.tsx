@@ -6,7 +6,6 @@ import React, { useState } from 'react';
 import {
   StyleSheet,
   View,
-  Text,
   TouchableOpacity,
   Image,
   TextInput,
@@ -17,6 +16,7 @@ import {
   Animated,
   KeyboardAvoidingView
 } from 'react-native';
+import { Text } from "../components/Text";
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -27,8 +27,8 @@ import { useNavigation } from "@react-navigation/native";
 
 // 파스텔 톤앤매너 매칭 룩업 테이블
 const emotionColors: { [key: string]: { bg: string; text: string; border: string } } = {
-  happy: { bg: '#f1eefc', text: '#b39ddb', border: '#b39ddb' },   // 잘 샀다: 소프트 라벤더
-  regret: { bg: '#fff1f1', text: '#f5a6a6', border: '#f5a6a6' },  // 후회: 소프트 코랄 파스텔
+  happy: { bg: '#f1eefc', text: '#6200ee', border: '#6200ee' },   // 잘 샀다: 소프트 라벤더
+  regret: { bg: '#fff1f1', text: '#e74c3c', border: '#e74c3c' },  // 후회: 소프트 코랄 파스텔
 };
 
 const ModifyScreen = ({ route }: any) => {
@@ -217,7 +217,7 @@ const ModifyScreen = ({ route }: any) => {
               <TouchableOpacity style={styles.imagePlaceholder} onPress={pickImage} activeOpacity={0.6}>
                 <View style={styles.centerContent}>
                   <View style={styles.cameraIconBox}>
-                    <Ionicons name="camera-outline" size={28} color="#b39ddb" />
+                    <Ionicons name="camera-outline" size={28} color="#6200ee" />
                   </View>
                   <Text style={styles.placeholderText}>여기를 눌러 사진을 첨부하세요</Text>
                 </View>
@@ -229,7 +229,7 @@ const ModifyScreen = ({ route }: any) => {
             소비 날짜<Text style={styles.required}>*</Text>
           </Text>
           <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.dateSelector} activeOpacity={0.7}>
-            <Ionicons name="calendar-outline" size={18} color="#b39ddb" style={{ marginRight: 10 }} />
+            <Ionicons name="calendar-outline" size={18} color="#6200ee" style={{ marginRight: 10 }} />
             <Text style={styles.dateText}>
               {modifyDate.format(DateTimeFormatter.ofPattern('yyyy년 MM월 dd일'))}
             </Text>
@@ -314,7 +314,7 @@ const ModifyScreen = ({ route }: any) => {
 
             <TouchableOpacity style={styles.sheetButton} onPress={() => { setIsSheetVisible(false); setTimeout(() => openCamera(), 300); }}>
               <View style={[styles.sheetIconBox, { backgroundColor: '#f1eefc' }]}>
-                <Ionicons name="camera" size={20} color="#b39ddb" />
+                <Ionicons name="camera" size={20} color="#6200ee" />
               </View>
               <Text style={styles.sheetButtonText}>직접 촬영하기</Text>
             </TouchableOpacity>
@@ -367,7 +367,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   required: {
-    color: '#f5a6a6',
+    color: '#e74c3c',
     marginLeft: 3,
   },
   imageContainer: {
@@ -393,7 +393,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
-    shadowColor: '#b39ddb',
+    shadowColor: '#6200ee',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
     shadowRadius: 8,
@@ -506,12 +506,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f9fc',
   },
   saveButton: {
-    backgroundColor: '#b39ddb',
+    backgroundColor: '#6200ee',
     paddingVertical: 18,
     borderRadius: 16,
     marginTop: 40,
     alignItems: 'center',
-    shadowColor: '#b39ddb',
+    shadowColor: '#6200ee',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.15,
     shadowRadius: 12,

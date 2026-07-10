@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Alert, Animated, Modal, Platform } from 'react-native';
-import { StyleSheet, View, Text, Image, ScrollView, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, Image, ScrollView, TouchableOpacity } from 'react-native';
+import { Text } from "../components/Text";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import firestore from '@react-native-firebase/firestore';
@@ -9,8 +10,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // 전체 앱과 톤앤매너를 맞춘 소프트 파스텔 컬러 룩업
 const emotionColors: { [key: string]: { bg: string; text: string } } = {
-  happy: { bg: '#f1eefc', text: '#b39ddb' },   // 잘 샀다: 소프트 라벤더
-  regret: { bg: '#fff1f1', text: '#f5a6a6' },  // 후회: 소프트 코랄 파스텔
+  happy: { bg: '#f1eefc', text: '#6200ee' },   // 잘 샀다: 소프트 라벤더
+  regret: { bg: '#fff1f1', text: '#e74c3c' },  // 후회: 소프트 코랄 파스텔
 };
 
 const stampImages: { [key: string]: any } = {
@@ -162,7 +163,7 @@ const DetailScreen = ({ route, navigation }: any) => {
               activeOpacity={0.6}
             >
               <View style={[styles.sheetIconBox, { backgroundColor: '#faf8ff' }]}>
-                <Ionicons name="pencil" size={18} color="#b39ddb" />
+                <Ionicons name="pencil" size={18} color="#6200ee" />
               </View>
               <Text style={styles.sheetButtonText}>수정하기</Text>
             </TouchableOpacity>
@@ -173,9 +174,9 @@ const DetailScreen = ({ route, navigation }: any) => {
               activeOpacity={0.6}
             >
               <View style={[styles.sheetIconBox, { backgroundColor: '#fff1f1' }]}>
-                <Ionicons name="trash" size={18} color="#f5a6a6" />
+                <Ionicons name="trash" size={18} color="#e74c3c" />
               </View>
-              <Text style={[styles.sheetButtonText, { color: '#f5a6a6' }]}>삭제하기</Text>
+              <Text style={[styles.sheetButtonText, { color: '#e74c3c' }]}>삭제하기</Text>
             </TouchableOpacity>
           </Animated.View>
         </View>

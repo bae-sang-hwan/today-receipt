@@ -1,13 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { StyleSheet, View, Text, Image, Animated, TouchableOpacity, BackHandler, Platform } from 'react-native';
-// ⭐️ useSafeAreaInsets 추가 import
+import { StyleSheet, View, Image, Animated, TouchableOpacity, BackHandler, Platform } from 'react-native';
+import { Text } from "../components/Text";
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useNavigation, CommonActions } from '@react-navigation/native';
 import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
 
-const adUnitId = TestIds.BANNER;
+const adUnitId = __DEV__ ? TestIds.BANNER : 'ca-app-pub-5927873314061819/2518464072';
 
 const stampImages: { [key: string]: any } = {
   happy: require('../../assets/stamp_happy.png'),
@@ -63,13 +63,12 @@ const SaveCompleteScreen = ({ route }: any) => {
   }, []);
 
   return (
-    // 💡 edges에서 bottom을 다시 제외하지 않고 기본값으로 둡니다.
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
 
         {/* 파스텔 라벤더 서클 아이콘 컨테이너 */}
         <View style={styles.successIconBox}>
-          <Ionicons name="checkmark" size={32} color="#b39ddb" />
+          <Ionicons name="checkmark" size={32} color="#6200ee" />
         </View>
 
         <Text style={styles.title}>기록 완료!</Text>
@@ -158,7 +157,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#f1eefc',
     marginBottom: 20,
-    shadowColor: '#b39ddb',
+    shadowColor: '#6200ee',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
     shadowRadius: 8,
@@ -214,12 +213,12 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   homeButton: {
-    backgroundColor: '#b39ddb',
+    backgroundColor: '#6200ee',
     width: '85%',
     paddingVertical: 18,
     borderRadius: 16,
     alignItems: 'center',
-    shadowColor: '#b39ddb',
+    shadowColor: '#6200ee',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.15,
     shadowRadius: 12,

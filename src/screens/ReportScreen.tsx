@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { StyleSheet, View, Text, ScrollView, Dimensions, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, ScrollView, Dimensions, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { Text } from "../components/Text";
 import { Ionicons } from '@expo/vector-icons';
 
 import firestore from '@react-native-firebase/firestore';
@@ -10,13 +11,11 @@ import { LocalDate, DateTimeFormatter } from "@js-joda/core";
 import { PanGestureHandler, State } from "react-native-gesture-handler";
 import { Image } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-// ⭐️ 구글 모바일 광고 라이브러리 추가
 import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
 
 const { width } = Dimensions.get('window');
 
-// 💡 상단 띠 배너 광고 단위 ID (테스트용 ID)
-const adUnitId = TestIds.BANNER;
+const adUnitId = __DEV__ ? TestIds.BANNER : 'ca-app-pub-5927873314061819/2518464072';
 
 const REGRET_ITEMS = [
   { id: 1, name: '뜨끈한 국밥', price: 10000, unit: '그릇', icon: 'restaurant-outline' as any, message: '더 먹을 수 있었어요!' },
@@ -171,7 +170,7 @@ const ReportScreen = () => {
   if (isInitialLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#b39ddb" />
+        <ActivityIndicator size="large" color="#6200ee" />
       </View>
     );
   }
@@ -263,7 +262,7 @@ const ReportScreen = () => {
                 ) : (
                   <>
                     저번 달보다{' '}
-                    <Text style={{ color: stats.isIncreased ? '#f5a6a6' : '#a5d6a7', fontWeight: '700' }}>
+                    <Text style={{ color: stats.isIncreased ? '#e74c3c' : '#a5d6a7', fontWeight: '700' }}>
                       {stats.diffAmount.toLocaleString()}원 {stats.isIncreased ? '더' : '덜'}
                     </Text>{' '}
                     썼어요 {stats.isIncreased ? '📈' : '📉'}
@@ -310,7 +309,7 @@ const ReportScreen = () => {
 
                   {/* 심플한 가로 정렬 품목 강조 스퀘어 */}
                   <View style={styles.itemMatchBox}>
-                    <Ionicons name={randomItem.icon} size={24} color="#b39ddb" style={{ marginRight: 8 }} />
+                    <Ionicons name={randomItem.icon} size={24} color="#6200ee" style={{ marginRight: 8 }} />
                     <Text style={styles.itemMatchText}>
                       {randomItem.name} <Text style={styles.itemCountText}>{randomItem.count}{randomItem.unit}</Text>
                     </Text>
@@ -319,7 +318,7 @@ const ReportScreen = () => {
                   <Text style={styles.reportSubText}>{randomItem.message}</Text>
 
                   <TouchableOpacity style={styles.refreshButton} onPress={handleRefreshItem} activeOpacity={0.7}>
-                    <Ionicons name="refresh-outline" size={14} color="#b39ddb" style={{ marginRight: 4 }} />
+                    <Ionicons name="refresh-outline" size={14} color="#6200ee" style={{ marginRight: 4 }} />
                     <Text style={styles.refreshButtonText}>다른 품목 비교</Text>
                   </TouchableOpacity>
                 </View>
@@ -367,10 +366,7 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#ffffff', // 헤더와 끊김없이 매끄럽게 흐르도록 흰색 배경 처리
-    paddingBottom: 2,
-    borderBottomWidth: 1,
-    borderBottomColor: '#edf2f7', // 광고 밑으로 바로 리포트 콘텐츠 경계 설정
+    backgroundColor: 'transparent', // 👈 배경을 투명하게 설정
   },
   backButton: {
     padding: 4,
@@ -420,7 +416,7 @@ const styles = StyleSheet.create({
   highlightBadgeText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#b39ddb'
+    color: '#6200ee'
   },
   highlightContent: {
     flexDirection: 'row',
@@ -497,20 +493,16 @@ const styles = StyleSheet.create({
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#b39ddb',
+    backgroundColor: '#6200ee',
   },
   praiseBox: {
-    backgroundColor: '#faf8ff',
-    padding: 14,
-    borderRadius: 12,
+    backgroundColor: '#fff',
     marginTop: 14,
-    borderWidth: 1,
-    borderColor: '#f1eefc'
   },
   praiseText: {
     fontSize: 13,
     color: '#b39ddb',
-    fontWeight: '600',
+    fontWeight: '500',
     textAlign: 'center',
     lineHeight: 18,
   },
@@ -574,7 +566,7 @@ const styles = StyleSheet.create({
   miniTagText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#b39ddb',
+    color: '#6200ee',
   },
   reportContent: {
     alignItems: 'flex-start',
@@ -585,7 +577,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   regretHighlight: {
-    color: '#f5a6a6',
+    color: '#e74c3c',
     fontWeight: '700',
   },
 
@@ -606,7 +598,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   itemCountText: {
-    color: '#b39ddb',
+    color: '#6200ee',
     fontWeight: '700',
   },
   reportSubText: {
@@ -628,7 +620,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   refreshButtonText: {
-    color: '#b39ddb',
+    color: '#6200ee',
     fontWeight: '600',
     fontSize: 12
   },

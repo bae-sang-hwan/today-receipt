@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import {View, Text, TouchableOpacity, StyleSheet, Image, Alert, ScrollView} from 'react-native';
+import {View, TouchableOpacity, StyleSheet, Image, Alert, ScrollView} from 'react-native';
+import { Text } from "../components/Text";
 import auth from '@react-native-firebase/auth';
 import { onGoogleButtonPress } from '../context/AuthContext';
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -92,7 +93,7 @@ const SettingsScreen = () => {
                 <Image source={{ uri: photoURL }} style={styles.avatar} />
               ) : (
                 <View style={styles.defaultAvatar}>
-                  <Ionicons name="person" size={24} color="#b39ddb" />
+                  <Ionicons name="person" size={24} color="#6200ee" />
                 </View>
               )}
               <View style={styles.userInfo}>
@@ -127,7 +128,7 @@ const SettingsScreen = () => {
                   }
                 }}
               >
-                <Ionicons name="logo-google" size={16} color="#b39ddb" style={{ marginRight: 8 }} />
+                <Ionicons name="logo-google" size={16} color="#6200ee" style={{ marginRight: 8 }} />
                 <Text style={styles.googleBtnText}>Google 계정 연결하기</Text>
               </TouchableOpacity>
             </View>
@@ -149,7 +150,7 @@ const SettingsScreen = () => {
             onPress={handleDeleteAccount}
             activeOpacity={0.6}
           >
-            <Text style={[styles.menuItemText, { color: '#f5a6a6' }]}>회원 탈퇴</Text>
+            <Text style={[styles.menuItemText, { color: '#e74c3c' }]}>회원 탈퇴</Text>
             <Ionicons name="chevron-forward" size={16} color="#cbd5e0" />
           </TouchableOpacity>
         </View>
@@ -235,7 +236,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff1f1',
   },
   logoutText: {
-    color: '#f5a6a6',
+    color: '#e74c3c',
     fontSize: 12,
     fontWeight: '700',
   },
@@ -258,7 +259,7 @@ const styles = StyleSheet.create({
   anonymousBadgeText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#b39ddb',
+    color: '#6200ee',
   },
   loginTitle: {
     fontSize: 16,
@@ -286,14 +287,14 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingVertical: 14,
     borderRadius: 14,
-    shadowColor: '#b39ddb',
+    shadowColor: '#6200ee',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
     shadowRadius: 6,
     elevation: 1,
   },
   googleBtnText: {
-    color: '#b39ddb',
+    color: '#6200ee',
     fontWeight: '700',
     fontSize: 14,
   },

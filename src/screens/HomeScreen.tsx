@@ -3,7 +3,8 @@ import auth from '@react-native-firebase/auth';
 
 import { FlatList } from 'react-native-gesture-handler';
 import React, { useEffect, useMemo, useState } from 'react';
-import { StyleSheet, View, Text, Dimensions, Image, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, Dimensions, Image, TouchableOpacity } from 'react-native';
+import { Text } from "../components/Text";
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import { DateTimeFormatter, LocalDate } from "@js-joda/core";
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -12,7 +13,6 @@ import { useNavigation } from "@react-navigation/native";
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import Svg, { Path } from 'react-native-svg';
 
-// ⭐️ 추가: 구글 애드몹 배너 관련 컴포넌트 및 테스트 ID 임포트
 import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
 
 const { width } = Dimensions.get('window');
@@ -27,12 +27,11 @@ LocaleConfig.locales['fr'] = {
 LocaleConfig.defaultLocale = 'fr';
 
 const emotionColors: { [key: string]: string } = {
-  happy: '#b39ddb',
-  regret: '#f5a6a6',
+  happy: '#6200ee',
+  regret: '#e74c3c',
 };
 
-// ⭐️ 추가: 구글 애드몹 배너 ID 세팅 (개발 중에는 무조건 TestIds를 써야 계정 정지를 피합니다)
-const adUnitId = __DEV__ ? TestIds.BANNER : 'ca-app-pub-xxxxxxxxxxxxxxxx/xxxxxxxxxx';
+const adUnitId = __DEV__ ? TestIds.BANNER : 'ca-app-pub-5927873314061819/2518464072';
 
 const HomeScreen = () => {
   const navigation = useNavigation<any>();
@@ -121,7 +120,7 @@ const HomeScreen = () => {
           calendarBackground: '#ffffff',
           textSectionTitleColor: '#a0aec0',
           textSectionTitleDisabledColor: '#e2e8f0',
-          todayTextColor: '#b39ddb',
+          todayTextColor: '#6200ee',
         }}
         enableSwipeMonths={true}
         onDayPress={day => {
@@ -301,8 +300,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   selectedDay: {
-    backgroundColor: '#b39ddb',
-    shadowColor: '#b39ddb',
+    backgroundColor: '#6200ee',
+    shadowColor: '#6200ee',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 10,
@@ -356,7 +355,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   totalAmountHighlight: {
-    color: '#b39ddb',
+    color: '#6200ee',
     fontWeight: '700',
   },
   card: {

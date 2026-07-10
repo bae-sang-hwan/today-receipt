@@ -34,7 +34,7 @@ const TabNavigator = () => {
           return <Ionicons name={iconName as any} size={22} color={color} />;
         },
         // 2차 프리미엄 파스텔 톤 매칭 (#626fe6와 소프트 그레이 #b0b8c1)
-        tabBarActiveTintColor: '#b39ddb',
+        tabBarActiveTintColor: '#6200ee',
         tabBarInactiveTintColor: '#a0aec0',
         headerShown: false,
 
@@ -43,6 +43,7 @@ const TabNavigator = () => {
           backgroundColor: '#ffffff',
           borderTopWidth: 1,
           borderTopColor: '#f1f3f5',
+          fontFamily: 'Pretendard-Bold',
 
           // 고정 높이 대신 디바이스 고유 하단 여백(insets.bottom)을 합산하여 가림 방지
           height: 64 + (insets.bottom > 0 ? insets.bottom : 12),
