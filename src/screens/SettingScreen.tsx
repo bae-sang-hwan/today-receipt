@@ -7,6 +7,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { deleteUserAccount } from '../api/authService';
 import { Ionicons } from '@expo/vector-icons';
+import {colors} from "../theme/colors";
 
 const SettingsScreen = () => {
   const [user, setUser] = useState(auth().currentUser);
@@ -93,7 +94,7 @@ const SettingsScreen = () => {
                 <Image source={{ uri: photoURL }} style={styles.avatar} />
               ) : (
                 <View style={styles.defaultAvatar}>
-                  <Ionicons name="person" size={24} color="#6200ee" />
+                  <Ionicons name="person" size={24} color={colors.purple} />
                 </View>
               )}
               <View style={styles.userInfo}>
@@ -108,7 +109,7 @@ const SettingsScreen = () => {
             <View style={styles.loginContainer}>
               <View style={styles.anonymousBadge}>
                 <Text style={styles.anonymousBadgeText}>
-                  {isAnonymous ? "🔒 익명 안심 모드 이용 중" : "로그인이 필요합니다"}
+                  {isAnonymous ? "익명 로그인" : "로그인이 필요합니다"}
                 </Text>
               </View>
               <Text style={styles.loginTitle}>소중한 지출 기록을 동기화하세요</Text>
@@ -128,15 +129,13 @@ const SettingsScreen = () => {
                   }
                 }}
               >
-                <Ionicons name="logo-google" size={16} color="#6200ee" style={{ marginRight: 8 }} />
+                <Ionicons name="logo-google" size={16} color={colors.purple} style={{ marginRight: 8 }} />
                 <Text style={styles.googleBtnText}>Google 계정 연결하기</Text>
               </TouchableOpacity>
             </View>
           )}
         </View>
 
-        {/* 일반 메뉴 리스트 */}
-        <Text style={styles.sectionLabel}>앱 정보</Text>
         <View style={styles.menuCard}>
           <View style={styles.menuItem}>
             <Text style={styles.menuItemText}>현재 버전</Text>
@@ -150,8 +149,8 @@ const SettingsScreen = () => {
             onPress={handleDeleteAccount}
             activeOpacity={0.6}
           >
-            <Text style={[styles.menuItemText, { color: '#e74c3c' }]}>회원 탈퇴</Text>
-            <Ionicons name="chevron-forward" size={16} color="#cbd5e0" />
+            <Text style={[styles.menuItemText, { color: colors.red }]}>회원 탈퇴</Text>
+            <Ionicons name="chevron-forward" size={16} color={colors.red} />
           </TouchableOpacity>
         </View>
 
@@ -163,36 +162,31 @@ const SettingsScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fc'
+    backgroundColor: colors.white
   },
   header: {
     paddingHorizontal: 24,
     paddingVertical: 16,
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.white,
     borderBottomWidth: 1,
-    borderBottomColor: '#edf2f7',
+    borderBottomColor: colors.o5,
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#2d3748',
-    letterSpacing: -0.5,
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.black,
   },
   scrollContent: {
     padding: 24
   },
 
-  // 프로필 메인 카드 스타일링
   profileCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 20,
+    backgroundColor: colors.purple10,
+    borderRadius: 12,
     padding: 24,
-    marginBottom: 28,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.02,
-    shadowRadius: 12,
-    elevation: 2,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: colors.purple10
   },
   profileWrapper: {
     flexDirection: 'row',
@@ -208,12 +202,12 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: '#faf8ff',
+    backgroundColor: colors.purple10,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 16,
     borderWidth: 1,
-    borderColor: '#f1eefc',
+    borderColor: colors.o5,
   },
   userInfo: {
     flex: 1
@@ -221,11 +215,11 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#2d3748',
+    color: colors.black,
     marginBottom: 2,
   },
   userEmail: {
-    color: '#a0aec0',
+    color: colors.placeHolder,
     fontSize: 13,
     fontWeight: '500',
   },
@@ -233,10 +227,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
-    backgroundColor: '#fff1f1',
+    backgroundColor: colors.red50,
   },
   logoutText: {
-    color: '#e74c3c',
+    color: colors.red,
     fontSize: 12,
     fontWeight: '700',
   },
@@ -248,29 +242,30 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   anonymousBadge: {
-    backgroundColor: '#faf8ff',
+    backgroundColor: colors.purple10,
     paddingHorizontal: 12,
     paddingVertical: 5,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#f1eefc',
+    borderColor: colors.o5,
     marginBottom: 14,
   },
   anonymousBadgeText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
-    color: '#6200ee',
+    color: colors.black,
+    backgroundColor: colors.white
   },
   loginTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#2d3748',
-    marginBottom: 8,
+    color: colors.black,
+    marginBottom: 4,
     textAlign: 'center'
   },
   loginSubTitle: {
-    fontSize: 13,
-    color: '#718096',
+    fontSize: 12,
+    color: colors.o40,
     textAlign: 'center',
     lineHeight: 18,
     fontWeight: '400',
@@ -281,62 +276,40 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#faf8ff',
+    backgroundColor: colors.purple50,
     borderWidth: 1,
-    borderColor: '#f1eefc',
+    borderColor: colors.o5,
     width: '100%',
-    paddingVertical: 14,
-    borderRadius: 14,
-    shadowColor: '#6200ee',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
   },
   googleBtnText: {
-    color: '#6200ee',
-    fontWeight: '700',
+    color: colors.purple,
+    fontWeight: 'bold',
     fontSize: 14,
   },
-
-  // 하단 메뉴 대시보드 카드 스타일링
-  sectionLabel: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#a0aec0',
-    marginBottom: 10,
-    marginLeft: 4,
-    textTransform: 'uppercase',
-  },
   menuCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 20,
-    paddingHorizontal: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.02,
-    shadowRadius: 12,
-    elevation: 2,
+    backgroundColor: colors.white,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 18,
+    paddingVertical: 12,
   },
   menuItemText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#4a5568',
+    color: colors.placeHolder,
   },
   versionText: {
     fontSize: 14,
-    color: '#a0aec0',
+    color: colors.placeHolder,
     fontWeight: '600',
   },
   menuDivider: {
     height: 1,
-    backgroundColor: '#edf2f7',
+    backgroundColor: colors.o5,
   }
 });
 

@@ -12,6 +12,7 @@ import { PanGestureHandler, State } from "react-native-gesture-handler";
 import { Image } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
+import {colors} from "../theme/colors";
 
 const { width } = Dimensions.get('window');
 
@@ -135,9 +136,9 @@ const ReportScreen = () => {
     const happyRatio = total > 0 ? (happyTotal / total) * 100 : 0;
 
     if (total > 0) {
-      if (happyRatio >= 70) praiseMessage = "와우! 가치 있는 소비를 아주 잘하고 계시네요! 😍";
-      else if (happyRatio >= 50) praiseMessage = "잘 산 지출이 50% 이상이네요! 나쁘지 않아요! 👍";
-      else praiseMessage = "후회되는 지출이 많아요. 다음 달엔 더 신중해져 볼까요? 🧐";
+      if (happyRatio >= 70) praiseMessage = "와우! 가치 있는 소비를 아주 잘하고 계시네요!";
+      else if (happyRatio >= 50) praiseMessage = "잘 산 지출이 50% 이상이네요! 나쁘지 않아요!";
+      else praiseMessage = "후회되는 지출이 많아요. 다음 달엔 더 신중해져 볼까요?";
     }
 
     return {
@@ -170,7 +171,7 @@ const ReportScreen = () => {
   if (isInitialLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#6200ee" />
+        <ActivityIndicator size="large" color={colors.purple} />
       </View>
     );
   }
@@ -180,12 +181,12 @@ const ReportScreen = () => {
       {/* 상단 미니멀 헤더 내비게이션 */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="chevron-back" size={22} color="#718096" />
+          <Ionicons name="chevron-back" size={22} color={colors.o40} />
         </TouchableOpacity>
 
         <View style={styles.monthNavigator}>
           <TouchableOpacity onPress={() => changeMonth(-1)} style={styles.arrowBtn}>
-            <Svg width="16" height="16" viewBox="0 0 24 24" fill="#a0aec0">
+            <Svg width="16" height="16" viewBox="0 0 24 24" fill={colors.o40}>
               <Path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
             </Svg>
           </TouchableOpacity>
@@ -195,7 +196,7 @@ const ReportScreen = () => {
           </Text>
 
           <TouchableOpacity onPress={() => changeMonth(1)} style={styles.arrowBtn}>
-            <Svg width="16" height="16" viewBox="0 0 24 24" fill="#a0aec0">
+            <Svg width="16" height="16" viewBox="0 0 24 24" fill={colors.o40}>
               <Path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" />
             </Svg>
           </TouchableOpacity>
@@ -262,7 +263,7 @@ const ReportScreen = () => {
                 ) : (
                   <>
                     저번 달보다{' '}
-                    <Text style={{ color: stats.isIncreased ? '#e74c3c' : '#a5d6a7', fontWeight: '700' }}>
+                    <Text style={{ color: stats.isIncreased ? colors.red : colors.green50, fontWeight: '700' }}>
                       {stats.diffAmount.toLocaleString()}원 {stats.isIncreased ? '더' : '덜'}
                     </Text>{' '}
                     썼어요 {stats.isIncreased ? '📈' : '📉'}
@@ -270,37 +271,27 @@ const ReportScreen = () => {
                 )}
               </Text>
 
-              <View style={styles.progressBarBg}>
-                <View style={[styles.progressBarFill, { width: `${stats.total > 0 ? stats.happyRatio : 0}%` }]} />
-              </View>
-
-              <View style={styles.praiseBox}>
-                <Text style={styles.praiseText}>{stats.praiseMessage}</Text>
-              </View>
-
-              <View style={styles.divider} />
-
               <View style={styles.emotionGrid}>
                 <View style={styles.emotionItem}>
-                  <Text style={styles.emotionLabel}>🛍️ 잘 샀다 </Text>
+                  <Text style={styles.emotionLabel}>잘 샀다</Text>
                   <Text style={styles.emotionValue}>{stats.happyTotal.toLocaleString()}원</Text>
                 </View>
 
                 <View style={styles.verticalDivider} />
 
                 <View style={styles.emotionItem}>
-                  <Text style={styles.emotionLabel}>🫠 후회 </Text>
+                  <Text style={styles.emotionLabel}>후회</Text>
                   <Text style={styles.emotionValue}>{stats.regretTotal.toLocaleString()}원</Text>
                 </View>
+              </View>
+
+              <View style={styles.praiseBox}>
+                <Text style={styles.praiseText}>{stats.praiseMessage}</Text>
               </View>
             </View>
 
             {/* 영수증 모양을 빼고 초깔끔 플랫 카드로 변경된 리포트 */}
             <View style={styles.reportCard}>
-              <View style={styles.reportHeader}>
-                <Text style={styles.reportTitle}>이 돈이면 차라리...</Text>
-              </View>
-
               {stats.regretTotal > 0 && randomItem ? (
                 <View style={styles.reportContent}>
                   <Text style={styles.reportMainText}>
@@ -309,16 +300,16 @@ const ReportScreen = () => {
 
                   {/* 심플한 가로 정렬 품목 강조 스퀘어 */}
                   <View style={styles.itemMatchBox}>
-                    <Ionicons name={randomItem.icon} size={24} color="#6200ee" style={{ marginRight: 8 }} />
+                    <Ionicons name={randomItem.icon} size={24} color={colors.o40} style={{ marginRight: 8 }} />
                     <Text style={styles.itemMatchText}>
-                      {randomItem.name} <Text style={styles.itemCountText}>{randomItem.count}{randomItem.unit}</Text>
+                      {randomItem.name} <Text style={styles.itemCountText}>{randomItem.count}</Text> {randomItem.unit}
                     </Text>
                   </View>
 
                   <Text style={styles.reportSubText}>{randomItem.message}</Text>
 
                   <TouchableOpacity style={styles.refreshButton} onPress={handleRefreshItem} activeOpacity={0.7}>
-                    <Ionicons name="refresh-outline" size={14} color="#6200ee" style={{ marginRight: 4 }} />
+                    <Ionicons name="refresh-outline" size={14} style={{ marginRight: 4 }} />
                     <Text style={styles.refreshButtonText}>다른 품목 비교</Text>
                   </TouchableOpacity>
                 </View>
@@ -342,13 +333,13 @@ const ReportScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fc'
+    backgroundColor: colors.white
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#ffffff'
+    backgroundColor: colors.purple10
   },
   header: {
     flexDirection: 'row',
@@ -356,10 +347,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 14,
-    backgroundColor: '#ffffff',
-    // 💡 아래 광고 배너와의 경계를 위해 구분선을 제거하거나 연하게 제어 가능
+    backgroundColor: colors.white,
     borderBottomWidth: 1,
-    borderBottomColor: '#edf2f7',
+    borderBottomColor: colors.o5,
   },
   // ⭐️ 추가: 상단 광고 레이아웃 전용 스타일
   topAdContainer: {
@@ -373,8 +363,8 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#2d3748',
+    fontWeight: 'bold',
+    color: colors.black,
     letterSpacing: -0.5,
   },
   monthNavigator: {
@@ -398,25 +388,21 @@ const styles = StyleSheet.create({
 
   // 상단 최고 지출 요약형 카드
   highlightCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 20,
+    backgroundColor: colors.purple10,
+    borderRadius: 12,
     padding: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#edf2f7',
+    borderColor: colors.o5,
   },
   highlightBadge: {
-    backgroundColor: '#f1eefc',
     alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
     marginBottom: 12,
   },
   highlightBadgeText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#6200ee'
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: colors.black
   },
   highlightContent: {
     flexDirection: 'row',
@@ -425,167 +411,133 @@ const styles = StyleSheet.create({
   highlightImage: {
     width: 54,
     height: 54,
-    borderRadius: 12,
-    backgroundColor: '#edf2f7'
+    borderRadius: 8,
+    backgroundColor: colors.white
   },
   highlightInfo: {
-    marginLeft: 14,
+    marginLeft: 12,
     flex: 1
   },
   highlightAmount: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#2d3748'
+    fontWeight: 'bold',
+    color: colors.black
   },
   highlightMemo: {
     fontSize: 13,
-    color: '#a0aec0',
+    color: colors.o40,
     marginTop: 3
   },
 
   // 메인 지출 대시보드 카드
   summaryCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 20,
-    padding: 24,
+    backgroundColor: colors.white,
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.02,
-    shadowRadius: 12,
   },
   summaryTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
+    paddingHorizontal: 12
   },
   cardSubTitle: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
-    color: '#a0aec0',
-    marginBottom: 4,
+    color: colors.black,
+    marginBottom: 2,
   },
   cardMainAmount: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#2d3748',
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: colors.black,
   },
   iconContainer: {
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: '#f1eefc',
+    backgroundColor: colors.purple10,
     alignItems: 'center',
     justifyContent: 'center',
   },
   comparisonText: {
     fontSize: 13,
-    color: '#718096',
-    marginTop: 8,
+    color: colors.placeHolder,
+    marginTop: 2,
     fontWeight: '500',
-  },
-  progressBarBg: {
-    height: 6,
-    backgroundColor: '#edf2f7',
-    borderRadius: 3,
-    marginTop: 16,
-    overflow: 'hidden',
-  },
-  progressBarFill: {
-    height: '100%',
-    backgroundColor: '#6200ee',
+    paddingHorizontal: 12
   },
   praiseBox: {
-    backgroundColor: '#fff',
     marginTop: 14,
+    borderRadius: 12
   },
   praiseText: {
-    fontSize: 13,
-    color: '#b39ddb',
+    fontSize: 12,
+    color: colors.placeHolder,
     fontWeight: '500',
     textAlign: 'center',
     lineHeight: 18,
   },
   divider: {
     height: 1,
-    backgroundColor: '#edf2f7',
+    backgroundColor: colors.o5,
     marginVertical: 20
   },
   emotionGrid: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
+    marginTop: 12
   },
   emotionItem: {
     flex: 1,
-    alignItems: 'center'
+    alignItems: 'center',
+    backgroundColor: colors.purple10,
+    paddingVertical: 12,
+    borderRadius: 12
   },
   emotionLabel: {
-    fontSize: 13,
-    color: '#718096',
-    fontWeight: '600',
+    fontSize: 12,
+    color: colors.o40,
+    fontWeight: 'bold',
     marginBottom: 4,
   },
   emotionValue: {
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: '700',
-    color: '#2d3748'
+    color: colors.black
   },
   verticalDivider: {
     width: 1,
     height: 24,
-    backgroundColor: '#edf2f7',
+    backgroundColor: colors.o5,
   },
 
   // 심플 플랫 형태로 변경된 하단 리포트 카드 디자인
   reportCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 20,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.02,
-    shadowRadius: 12,
-  },
-  reportHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  reportTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#2d3748',
-  },
-  miniTag: {
-    backgroundColor: '#f1eefc',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  miniTagText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#6200ee',
+    borderRadius: 12,
+    borderTopWidth: 1,
+    borderColor: colors.o5,
+    paddingTop: 24,
+    paddingLeft: 12,
+    paddingRight: 12
   },
   reportContent: {
     alignItems: 'flex-start',
   },
   reportMainText: {
     fontSize: 14,
-    color: '#718096',
+    color: colors.o40,
     lineHeight: 20,
   },
   regretHighlight: {
-    color: '#e74c3c',
+    color: colors.red,
     fontWeight: '700',
   },
 
-  // 인라인 형태의 깔끔한 가로 품목 블록
   itemMatchBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f8f9fc',
+    backgroundColor: colors.purple10,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 12,
@@ -593,17 +545,18 @@ const styles = StyleSheet.create({
     marginVertical: 12,
   },
   itemMatchText: {
-    fontSize: 15,
-    color: '#2d3748',
+    fontSize: 14,
+    color: colors.black,
     fontWeight: '600',
   },
   itemCountText: {
-    color: '#6200ee',
+    color: colors.purple,
     fontWeight: '700',
+    verticalAlign: 'top'
   },
   reportSubText: {
-    fontSize: 13,
-    color: '#a0aec0',
+    fontSize: 14,
+    color: colors.o40,
     fontWeight: '500',
     marginBottom: 12,
   },
@@ -614,18 +567,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#faf8ff',
+    backgroundColor: colors.white,
     borderWidth: 1,
-    borderColor: '#f1eefc',
+    borderColor: colors.o5,
     marginTop: 4,
   },
   refreshButtonText: {
-    color: '#6200ee',
     fontWeight: '600',
     fontSize: 12
   },
 
-  // 후회 소비 없음 (Perfect State) 리디자인
   perfectContent: {
     paddingVertical: 12,
     alignItems: 'center',
@@ -635,7 +586,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#e8f5e9',
+    backgroundColor: colors.purple10,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 10,
@@ -645,8 +596,8 @@ const styles = StyleSheet.create({
   },
   perfectText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#2e7d32',
+    fontWeight: 'bold',
+    color: colors.placeHolder,
     textAlign: 'center',
   },
 });

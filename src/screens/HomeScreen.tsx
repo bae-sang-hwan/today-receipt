@@ -14,6 +14,7 @@ import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import Svg, { Path } from 'react-native-svg';
 
 import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
+import {colors} from "../theme/colors";
 
 const { width } = Dimensions.get('window');
 
@@ -27,8 +28,8 @@ LocaleConfig.locales['fr'] = {
 LocaleConfig.defaultLocale = 'fr';
 
 const emotionColors: { [key: string]: string } = {
-  happy: '#6200ee',
-  regret: '#e74c3c',
+  happy: colors.purple,
+  regret: colors.red,
 };
 
 const adUnitId = __DEV__ ? TestIds.BANNER : 'ca-app-pub-5927873314061819/2518464072';
@@ -117,10 +118,10 @@ const HomeScreen = () => {
       <Calendar
         style={styles.calendar}
         theme={{
-          calendarBackground: '#ffffff',
-          textSectionTitleColor: '#a0aec0',
-          textSectionTitleDisabledColor: '#e2e8f0',
-          todayTextColor: '#6200ee',
+          calendarBackground: colors.white,
+          textSectionTitleColor: colors.placeHolder,
+          textSectionTitleDisabledColor: colors.placeHolder,
+          todayTextColor: colors.purple,
         }}
         enableSwipeMonths={true}
         onDayPress={day => {
@@ -131,11 +132,11 @@ const HomeScreen = () => {
         renderArrow={(direction) => (
           <View style={styles.arrowButtonContainer}>
             {direction === 'left' ? (
-              <Svg width="16" height="16" viewBox="0 0 24 24" fill="#a0aec0">
+              <Svg width="16" height="16" viewBox="0 0 24 24" fill={colors.o40}>
                 <Path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
               </Svg>
             ) : (
-              <Svg width="16" height="16" viewBox="0 0 24 24" fill="#a0aec0">
+              <Svg width="16" height="16" viewBox="0 0 24 24" fill={colors.o40}>
                 <Path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" />
               </Svg>
             )}
@@ -162,21 +163,21 @@ const HomeScreen = () => {
               <Text style={[
                 styles.dayText,
                 state === 'disabled'
-                  ? { color: '#e2e8f0' }
+                  ? { color: colors.placeHolder }
                   : isSunday
-                    ? { color: '#e53e3e' }
+                    ? { color: colors.red }
                     : isSaturday
-                      ? { color: '#3182ce' }
-                      : { color: '#4a5568' },
+                      ? { color: colors.o40 }
+                      : { color: colors.black },
 
-                isSelected && { color: '#ffffff', fontWeight: '600' }
+                isSelected && { color: colors.white, fontWeight: '600' }
               ]}>
                 {date.day}
               </Text>
 
               {dayData && dayData.totalAmount > 0 && (
                 isSelected ? (
-                  <Text style={[styles.amountDayText, { color: '#ffffff' }]} numberOfLines={1}>
+                  <Text style={[styles.amountDayText, { color: colors.white }]} numberOfLines={1}>
                     {dayData.totalAmount >= 10000
                       ? `${Math.floor(dayData.totalAmount / 1000) / 10}만`
                       : dayData.totalAmount.toLocaleString()}
@@ -243,7 +244,7 @@ const HomeScreen = () => {
                 <Image source={{ uri: item.photoURL }} style={styles.cardImage} />
                 <View style={styles.cardContent}>
                   <View style={styles.cardHeader}>
-                    <Text style={[styles.emotionText, { color: emotionColors[item.emotion] || '#4a5568' }]}>
+                    <Text style={[styles.emotionText, { color: emotionColors[item.emotion] || colors.placeHolder }]}>
                       {item.emotion === 'happy' ? '🛍️ 잘 샀다 ' : '🫠 후회 '}
                     </Text>
                     <Text style={styles.amountText}>{Number(item.amount).toLocaleString()}원</Text>
@@ -264,24 +265,24 @@ const HomeScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.white,
   },
   calendar: {
     paddingHorizontal: 16,
     paddingBottom: 12,
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.white,
   },
   calendarAdContainer: {
     width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
     marginVertical: 10,
-    backgroundColor: 'transparent', // 👈 배경을 투명하게 설정
+    backgroundColor: 'transparent',
   },
   headerDateText: {
     fontSize: 19,
     fontWeight: '700',
-    color: '#2d3748',
+    color: colors.black,
     letterSpacing: -0.5,
   },
   arrowButtonContainer: {
@@ -300,8 +301,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   selectedDay: {
-    backgroundColor: '#6200ee',
-    shadowColor: '#6200ee',
+    backgroundColor: colors.purple,
+    shadowColor: colors.purple,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 10,
@@ -322,17 +323,17 @@ const styles = StyleSheet.create({
     bottom: 4,
     width: 4,
     height: 4,
-    backgroundColor: '#a5d6a7',
+    backgroundColor: colors.purple,
     borderRadius: 2,
   },
   detailsContainer: {
     flex: 1,
-    backgroundColor: '#f8f9fc',
+    backgroundColor: colors.purple10,
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     paddingHorizontal: 24,
     paddingTop: 24,
-    shadowColor: '#000',
+    shadowColor: colors.black,
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.02,
     shadowRadius: 10,
@@ -346,27 +347,27 @@ const styles = StyleSheet.create({
   },
   listTitle: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#2d3748'
+    fontWeight: "bold",
+    color: colors.black
   },
   dayTotalText: {
     fontSize: 14,
-    color: '#718096',
+    color: colors.o40,
     fontWeight: '500',
   },
   totalAmountHighlight: {
-    color: '#6200ee',
+    color: colors.purple,
     fontWeight: '700',
   },
   card: {
     flexDirection: 'row',
-    backgroundColor: '#ffffff',
-    borderRadius: 20,
+    backgroundColor: colors.white,
+    borderRadius: 8,
     padding: 16,
     marginBottom: 12,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.03,
     shadowRadius: 8,
     elevation: .5
@@ -374,8 +375,8 @@ const styles = StyleSheet.create({
   cardImage: {
     width: 64,
     height: 64,
-    borderRadius: 14,
-    backgroundColor: '#edf2f7'
+    borderRadius: 12,
+    backgroundColor: colors.white
   },
   cardContent: {
     flex: 1,
@@ -392,32 +393,32 @@ const styles = StyleSheet.create({
   },
   amountText: {
     fontSize: 15,
-    fontWeight: '700',
-    color: '#2d3748'
+    fontWeight: "bold",
+    color: colors.black
   },
   memoText: {
     fontSize: 13,
-    color: '#a0aec0',
+    color: colors.o40,
     lineHeight: 18
   },
   emptyState: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.white,
     borderRadius: 24,
-    paddingVertical: 50,
+    paddingVertical: 40,
     paddingHorizontal: 20,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: colors.o5,
     borderStyle: 'dashed',
-    marginTop: 10,
+    marginTop: 0,
   },
   emptyIconBox: {
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#edf2f7',
+    backgroundColor: colors.o5,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 14,
@@ -426,7 +427,7 @@ const styles = StyleSheet.create({
     fontSize: 26,
   },
   emptyText: {
-    color: '#a0aec0',
+    color: colors.placeHolder,
     fontSize: 14,
     fontWeight: '500',
     textAlign: 'center',

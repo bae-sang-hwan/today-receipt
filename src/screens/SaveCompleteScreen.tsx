@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useNavigation, CommonActions } from '@react-navigation/native';
 import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
+import {colors} from "../theme/colors";
 
 const adUnitId = __DEV__ ? TestIds.BANNER : 'ca-app-pub-5927873314061819/2518464072';
 
@@ -68,7 +69,7 @@ const SaveCompleteScreen = ({ route }: any) => {
 
         {/* 파스텔 라벤더 서클 아이콘 컨테이너 */}
         <View style={styles.successIconBox}>
-          <Ionicons name="checkmark" size={32} color="#6200ee" />
+          <Ionicons name="checkmark" size={32} color={colors.purple} />
         </View>
 
         <Text style={styles.title}>기록 완료!</Text>
@@ -139,7 +140,7 @@ const SaveCompleteScreen = ({ route }: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff'
+    backgroundColor: colors.white
   },
   content: {
     flex: 1,
@@ -151,45 +152,40 @@ const styles = StyleSheet.create({
     width: 68,
     height: 68,
     borderRadius: 34,
-    backgroundColor: '#faf8ff',
+    backgroundColor: colors.purple10,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#f1eefc',
+    borderColor: colors.o5,
     marginBottom: 20,
-    shadowColor: '#6200ee',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 2,
   },
   title: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#2d3748',
-    marginBottom: 8,
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.black,
+    marginBottom: 4,
     letterSpacing: -0.5,
   },
   subtitle: {
     fontSize: 14,
-    color: '#718096',
-    marginBottom: 32,
+    color: colors.placeHolder,
+    marginBottom: 24,
     textAlign: 'center',
     fontWeight: '500',
   },
   imageWrapper: {
     width: '85%',
     height: 360,
-    borderRadius: 24,
+    borderRadius: 12,
     overflow: 'hidden',
     position: 'relative',
     marginBottom: 44,
-    backgroundColor: '#f8f9fc',
-    shadowColor: '#000',
+    backgroundColor: colors.purple10,
+    shadowColor: colors.black,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.05,
     shadowRadius: 20,
-    elevation: 6,
+    elevation: 4,
   },
   receiptImage: {
     width: '100%',
@@ -197,35 +193,30 @@ const styles = StyleSheet.create({
   },
   stampImage: {
     position: 'absolute',
-    bottom: -10,
-    right: -10,
-    width: 160,
-    height: 160,
+    bottom: 8,
+    right: 8,
+    width: 120,
+    height: 120,
   },
   loadingOverlay: {
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f8f9fc'
+    backgroundColor: colors.purple10
   },
   loadingText: {
-    color: '#a0aec0',
+    color: colors.placeHolder,
     fontSize: 13,
     fontWeight: '500',
   },
   homeButton: {
-    backgroundColor: '#6200ee',
-    width: '85%',
+    backgroundColor: colors.purple,
+    width: '100%',
     paddingVertical: 18,
-    borderRadius: 16,
+    borderRadius: 12,
     alignItems: 'center',
-    shadowColor: '#6200ee',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 4,
   },
   homeButtonText: {
-    color: '#ffffff',
+    color: colors.white,
     fontSize: 16,
     fontWeight: '700'
   },
@@ -233,7 +224,7 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'transparent', // 👈 배경을 투명하게 설정
+    backgroundColor: 'transparent',
   },
 });
 

@@ -7,6 +7,7 @@ import HomeScreen from "../screens/HomeScreen";
 import AddScreen from "../screens/AddScreen";
 import ReportScreen from "../screens/ReportScreen";
 import SettingScreen from "../screens/SettingScreen";
+import {colors} from "../theme/colors";
 
 const Tab = createBottomTabNavigator();
 
@@ -30,19 +31,18 @@ const TabNavigator = () => {
             iconName = focused ? 'settings' : 'settings-outline';
           }
 
-          // HTML 규격에 맞는 아이콘 크기 (22px) 강제 지정
           return <Ionicons name={iconName as any} size={22} color={color} />;
         },
-        // 2차 프리미엄 파스텔 톤 매칭 (#626fe6와 소프트 그레이 #b0b8c1)
-        tabBarActiveTintColor: '#6200ee',
-        tabBarInactiveTintColor: '#a0aec0',
+
+        tabBarActiveTintColor: colors.purple,
+        tabBarInactiveTintColor: colors.placeHolder,
         headerShown: false,
 
         // 하단 디바이스 바 가림 해결 및 스타일 고도화
         tabBarStyle: {
-          backgroundColor: '#ffffff',
+          backgroundColor: colors.white,
           borderTopWidth: 1,
-          borderTopColor: '#f1f3f5',
+          borderTopColor: colors.o5,
           fontFamily: 'Pretendard-Bold',
 
           // 고정 높이 대신 디바이스 고유 하단 여백(insets.bottom)을 합산하여 가림 방지
@@ -51,7 +51,7 @@ const TabNavigator = () => {
           paddingTop: 8,
 
           // 그림자 은은하게 처리
-          shadowColor: '#000000',
+          shadowColor: colors.black,
           shadowOffset: { width: 0, height: -4 },
           shadowOpacity: 0.02,
           shadowRadius: 12,
@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   iconWrapperActive: {
-    backgroundColor: '#eeefff', // 2차 리디자인에서 제공한 선택 메뉴 전용 소프트 캡슐 배경
+    backgroundColor: colors.placeHolder, // 2차 리디자인에서 제공한 선택 메뉴 전용 소프트 캡슐 배경
   },
 });
 

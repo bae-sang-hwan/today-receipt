@@ -26,12 +26,12 @@ import { ActivityIndicator } from 'react-native';
 import { DateTimeFormatter, LocalDate, nativeJs } from "@js-joda/core";
 import { useDate } from "../context/DateContext";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
-import Svg, { Path } from 'react-native-svg';
+import {colors} from "../theme/colors";
 
 // 변경된 세련된 감정 시그니처 파스텔 매칭 컬러 테이블
 const emotionColors: { [key: string]: { bg: string; text: string; border: string } } = {
-  happy: { bg: '#f1eefc', text: '#6200ee', border: '#6200ee' }, // 잘 샀다: 소프트 라벤더
-  regret: { bg: '#fff1f1', text: '#e74c3c', border: '#e74c3c' }, // 후회: 소프트 코랄 파스텔
+  happy: { bg: colors.purple50, text: colors.purple, border: colors.purple },
+  regret: { bg: colors.red50, text: colors.red, border: colors.red },
 };
 
 const AddScreen = () => {
@@ -198,13 +198,13 @@ const AddScreen = () => {
         styles.emotionBtn,
         selected
           ? { backgroundColor: emotionColors[type].bg, borderColor: emotionColors[type].border, borderWidth: 1 }
-          : { backgroundColor: '#f8f9fc', borderColor: '#edf2f7', borderWidth: 1 }
+          : { backgroundColor: colors.purple10, borderColor: colors.o5, borderWidth: 1 }
       ]}
     >
       <Text
         style={[
           styles.emotionBtnText,
-          selected ? { color: emotionColors[type].text, fontWeight: '700' } : { color: '#718096' }
+          selected ? { color: emotionColors[type].text, fontWeight: '600' } : { color: colors.placeHolder }
         ]}
       >
         {label}
@@ -222,13 +222,18 @@ const AddScreen = () => {
         {/* 상단 헤더라인 리디자인 */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Ionicons name="chevron-back" size={22} color="#718096" />
+            <Ionicons name="chevron-back" size={22} color={colors.o40} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>기록하기</Text>
           <View style={{ width: 32 }} />
         </View>
 
-        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: insets.bottom + 24 }
+        ]}
+                    keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator={false}>
           <Text style={styles.label}>
             영수증 / 지출 사진<Text style={styles.required}>*</Text>
           </Text>
@@ -239,14 +244,14 @@ const AddScreen = () => {
               <View style={styles.previewWrapper}>
                 <Image source={{ uri: image }} style={styles.fullImage} />
                 <TouchableOpacity style={styles.closeButton} onPress={clearImage} activeOpacity={0.8}>
-                  <Ionicons name="close" size={18} color="#ffffff" />
+                  <Ionicons name="close" size={18} color={colors.white} />
                 </TouchableOpacity>
               </View>
             ) : (
               <TouchableOpacity style={styles.imagePlaceholder} onPress={pickImage} activeOpacity={0.6}>
                 <View style={styles.centerContent}>
                   <View style={styles.cameraIconBox}>
-                    <Ionicons name="camera-outline" size={28} color="#6200ee" />
+                    <Ionicons name="camera-outline" size={28} color={colors.purple} />
                   </View>
                   <Text style={styles.placeholderText}>여기를 눌러 사진을 첨부하세요</Text>
                 </View>
@@ -258,7 +263,7 @@ const AddScreen = () => {
             소비 날짜<Text style={styles.required}>*</Text>
           </Text>
           <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.dateSelector} activeOpacity={0.7}>
-            <Ionicons name="calendar-outline" size={18} color="#6200ee" style={{ marginRight: 10 }} />
+            <Ionicons name="calendar-outline" size={18} color={colors.placeHolder} style={{ marginRight: 10 }} />
             <Text style={styles.dateText}>
               {selectedDate.format(DateTimeFormatter.ofPattern('yyyy년 MM월 dd일'))}
             </Text>
@@ -282,7 +287,7 @@ const AddScreen = () => {
             <TextInput
               style={styles.input}
               placeholder="0"
-              placeholderTextColor="#cbd5e0"
+              placeholderTextColor={colors.placeHolder}
               keyboardType="numeric"
               value={amount}
               onChangeText={(text) => {
@@ -312,7 +317,7 @@ const AddScreen = () => {
           <TextInput
             style={styles.memoInput}
             placeholder="어디에 쓰셨나요? (예: 편의점 간식)"
-            placeholderTextColor="#cbd5e0"
+            placeholderTextColor={colors.placeHolder}
             value={memo}
             onChangeText={setMemo}
             maxLength={40}
@@ -320,13 +325,13 @@ const AddScreen = () => {
 
           {/* 하단 활성화 세련된 그라데이션 라벤더 저장 버튼 */}
           <TouchableOpacity
-            style={[styles.saveButton, loading && { backgroundColor: '#e2e8f0' }]}
+            style={[styles.saveButton, loading && { backgroundColor: colors.white }]}
             onPress={handleSave}
             disabled={loading}
             activeOpacity={0.8}
           >
             {loading ? (
-              <ActivityIndicator color="#ffffff" />
+              <ActivityIndicator color={colors.white} />
             ) : (
               <Text style={styles.saveButtonText}>기록 완료하기</Text>
             )}
@@ -350,7 +355,7 @@ const AddScreen = () => {
 
           <View style={[styles.sheetContainer, { paddingBottom: insets.bottom + 16 }]}>
             <View style={styles.sheetHandle} />
-            <Text style={styles.sheetTitle}>영수증 가져오기</Text>
+            <Text style={styles.sheetTitle}>사진 가져오기</Text>
 
             <TouchableOpacity
               style={styles.sheetButton}
@@ -359,8 +364,8 @@ const AddScreen = () => {
                 setTimeout(() => openCamera(), 300);
               }}
             >
-              <View style={[styles.sheetIconBox, { backgroundColor: '#f1eefc' }]}>
-                <Ionicons name="camera" size={20} color="#6200ee" />
+              <View style={[styles.sheetIconBox, { backgroundColor: colors.purple50 }]}>
+                <Ionicons name="camera" size={20} color={colors.purple} />
               </View>
               <Text style={styles.sheetButtonText}>직접 촬영하기</Text>
             </TouchableOpacity>
@@ -372,8 +377,8 @@ const AddScreen = () => {
                 setTimeout(() => openLibrary(), 300);
               }}
             >
-              <View style={[styles.sheetIconBox, { backgroundColor: '#f8f9fc' }]}>
-                <Ionicons name="images" size={20} color="#718096" />
+              <View style={[styles.sheetIconBox, { backgroundColor: colors.o5 }]}>
+                <Ionicons name="images" size={20} color={colors.o40} />
               </View>
               <Text style={styles.sheetButtonText}>갤러리에서 선택</Text>
             </TouchableOpacity>
@@ -387,7 +392,7 @@ const AddScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff'
+    backgroundColor: colors.white
   },
   header: {
     flexDirection: 'row',
@@ -395,31 +400,33 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 14,
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.white,
     borderBottomWidth: 1,
-    borderBottomColor: '#edf2f7',
+    borderBottomColor: colors.o5,
   },
   backButton: {
     padding: 4,
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#2d3748',
+    fontWeight: 'bold',
+    color: colors.black,
     letterSpacing: -0.5,
   },
   scrollContent: {
-    padding: 24
+    padding: 24,
+    paddingTop: 0,
+    paddingBottom: 0,
   },
   label: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#2d3748',
+    color: colors.black,
     marginTop: 24,
-    marginBottom: 10,
+    marginBottom: 12,
   },
   required: {
-    color: '#e74c3c',
+    color: colors.red,
     marginLeft: 3,
   },
 
@@ -431,10 +438,10 @@ const styles = StyleSheet.create({
   imagePlaceholder: {
     width: '100%',
     height: 220,
-    backgroundColor: '#faf8ff',
+    backgroundColor: colors.purple10,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#f1eefc',
+    borderColor: colors.o5,
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden'
@@ -443,20 +450,20 @@ const styles = StyleSheet.create({
     width: 54,
     height: 54,
     borderRadius: 27,
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.white,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
-    shadowColor: '#6200ee',
+    shadowColor: colors.black,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
     shadowRadius: 8,
-    elevation: 3,
+    elevation: 2,
   },
   placeholderText: {
     fontSize: 13,
-    color: '#a0aec0',
-    fontWeight: '500',
+    color: colors.placeHolder,
+    fontWeight: '400',
   },
   centerContent: {
     alignItems: 'center'
@@ -475,7 +482,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 12,
     right: 12,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: colors.o40,
     width: 28,
     height: 28,
     borderRadius: 14,
@@ -483,27 +490,26 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  // 인풋박스 및 인라인 요소 다듬기
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f8f9fc',
+    backgroundColor: colors.purple10,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#edf2f7',
+    borderColor: colors.o5,
     paddingHorizontal: 16,
   },
   input: {
     flex: 1,
     paddingVertical: 16,
     fontSize: 16,
-    color: '#2d3748',
+    color: colors.black,
     fontWeight: '600',
   },
   inputUnit: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '700',
-    color: '#4a5568',
+    color: colors.placeHolder,
     marginLeft: 8,
   },
 
@@ -516,7 +522,7 @@ const styles = StyleSheet.create({
   emotionBtn: {
     flex: 1,
     paddingVertical: 16,
-    borderRadius: 16,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -529,70 +535,64 @@ const styles = StyleSheet.create({
   dateSelector: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f8f9fc',
+    backgroundColor: colors.purple10,
     paddingHorizontal: 16,
     paddingVertical: 16,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#edf2f7'
+    borderColor: colors.o5
   },
   dateText: {
-    fontSize: 15,
-    color: '#2d3748',
+    fontSize: 16,
+    color: colors.black,
     fontWeight: '600',
     flex: 1
   },
   miniChangeBadge: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.white,
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#edf2f7',
+    borderColor: colors.o5,
   },
   miniChangeBadgeText: {
-    color: '#718096',
+    color: colors.o80,
     fontWeight: '600',
     fontSize: 12,
   },
   memoInput: {
     borderWidth: 1,
-    borderColor: '#edf2f7',
+    borderColor: colors.o5,
     borderRadius: 16,
     padding: 16,
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '500',
-    color: '#2d3748',
-    backgroundColor: '#f8f9fc',
+    color: colors.black,
+    backgroundColor: colors.purple10,
   },
 
   // 저장 메인 서브밋 구조 변경
   saveButton: {
-    backgroundColor: '#6200ee', // 통일성 높은 시그니처 파스텔 라벤더
+    backgroundColor: colors.purple,
     paddingVertical: 18,
     borderRadius: 16,
     marginTop: 40,
     alignItems: 'center',
-    shadowColor: '#6200ee',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 4,
   },
   saveButtonText: {
-    color: '#ffffff',
+    color: colors.white,
     fontSize: 16,
-    fontWeight: '700'
+    fontWeight: '700',
   },
 
-  // 모달 영역 디자인 정돈
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(26, 32, 44, 0.4)', // 좀 더 고급스러운 네이비 블랙 알파값 블러팅효과
+    backgroundColor: colors.o40,
     justifyContent: 'flex-end',
   },
   sheetContainer: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.white,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 24,
@@ -602,16 +602,16 @@ const styles = StyleSheet.create({
   sheetHandle: {
     width: 36,
     height: 4,
-    backgroundColor: '#e2e8f0',
+    backgroundColor: colors.placeHolder,
     borderRadius: 2,
     alignSelf: 'center',
     marginBottom: 16,
   },
   sheetTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: 'bold',
     marginBottom: 16,
-    color: '#2d3748',
+    color: colors.black,
   },
   sheetButton: {
     flexDirection: 'row',
@@ -628,8 +628,8 @@ const styles = StyleSheet.create({
     marginRight: 14,
   },
   sheetButtonText: {
-    fontSize: 15,
-    color: '#4a5568',
+    fontSize: 14,
+    color: colors.black,
     fontWeight: '600',
   },
 });
