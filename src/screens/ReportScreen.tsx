@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { StyleSheet, View, ScrollView, Dimensions, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Text } from "../components/Text";
 import { Ionicons } from '@expo/vector-icons';
 
@@ -13,8 +13,7 @@ import { Image } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
 import {colors} from "../theme/colors";
-
-const { width } = Dimensions.get('window');
+import { useFamily } from "../context/FamilyContext";
 
 const adUnitId = __DEV__ ? TestIds.BANNER : 'ca-app-pub-5927873314061819/2518464072';
 
@@ -28,6 +27,7 @@ const REGRET_ITEMS = [
 ];
 
 const ReportScreen = () => {
+
   const navigation = useNavigation<any>();
 
   const [selectedDate, setSelectedDate] = useState(LocalDate.now());
@@ -48,6 +48,7 @@ const ReportScreen = () => {
   }, []);
 
   const userId = currentUser?.uid;
+  const { familyMemberIds, family } = useFamily();
 
   const changeMonth = (amount: number) => {
     setIsUpdating(true);
@@ -68,7 +69,7 @@ const ReportScreen = () => {
   };
 
   useEffect(() => {
-    if (!userId) {
+    if (!userId || familyMemberIds.length === 0) {
       setReceipts([]);
       setLastMonthTotal(0);
       setIsInitialLoading(false);
@@ -84,9 +85,11 @@ const ReportScreen = () => {
     const lastStartStr = lastMonth.withDayOfMonth(1).toString();
     const lastEndStr = lastMonth.withDayOfMonth(lastMonth.lengthOfMonth()).toString();
 
+    const memberIds = familyMemberIds.slice(0, 30); // Firestore in 쿼리 최대 30개
+
     const unsubscribe = firestore()
       .collection("receipts")
-      .where("userId", "==", userId)
+      .where("userId", "in", memberIds)
       .where("dateString", ">=", startStr)
       .where("dateString", "<=", endStr)
       .orderBy("createdAt", "desc")
@@ -100,7 +103,7 @@ const ReportScreen = () => {
 
     firestore()
       .collection("receipts")
-      .where("userId", "==", userId)
+      .where("userId", "in", memberIds)
       .where("dateString", ">=", lastStartStr)
       .where("dateString", "<=", lastEndStr)
       .orderBy("createdAt", "desc")
@@ -111,7 +114,7 @@ const ReportScreen = () => {
       });
 
     return () => unsubscribe();
-  }, [selectedDate, userId]);
+  }, [selectedDate, userId, JSON.stringify(familyMemberIds)]);
 
   const stats = useMemo(() => {
     const regretTotal = receipts
@@ -239,6 +242,11 @@ const ReportScreen = () => {
                 <View style={styles.highlightContent}>
                   <Image source={{ uri: stats.topReceipt.photoURL }} style={styles.highlightImage} />
                   <View style={styles.highlightInfo}>
+                    {family && family.memberIds.length > 1 && stats.topReceipt.userId !== userId && (
+                      <Text style={{ fontSize: 11, color: colors.green50, fontWeight: '700', marginBottom: 2 }}>
+                        {family.members?.[stats.topReceipt.userId]?.displayName || '가족 구성원'}
+                      </Text>
+                    )}
                     <Text style={styles.highlightAmount}>{Number(stats.topReceipt.amount).toLocaleString()}원</Text>
                     <Text style={styles.highlightMemo} numberOfLines={1}>
                       {stats.topReceipt.memo || "기록된 메모가 없어요."}
@@ -417,6 +425,12 @@ const styles = StyleSheet.create({
   highlightInfo: {
     marginLeft: 12,
     flex: 1
+  },
+  familyMemberTag: {
+    fontSize: 11,
+    color: colors.green50,
+    fontWeight: '700',
+    marginBottom: 2,
   },
   highlightAmount: {
     fontSize: 18,

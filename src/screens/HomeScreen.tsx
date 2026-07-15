@@ -3,7 +3,7 @@ import auth from '@react-native-firebase/auth';
 
 import { FlatList } from 'react-native-gesture-handler';
 import React, { useEffect, useMemo, useState } from 'react';
-import { StyleSheet, View, Dimensions, Image, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, Image, TouchableOpacity } from 'react-native';
 import { Text } from "../components/Text";
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import { DateTimeFormatter, LocalDate } from "@js-joda/core";
@@ -12,11 +12,10 @@ import { useDate } from "../context/DateContext";
 import { useNavigation } from "@react-navigation/native";
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import Svg, { Path } from 'react-native-svg';
+import { useFamily } from "../context/FamilyContext";
 
 import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
 import {colors} from "../theme/colors";
-
-const { width } = Dimensions.get('window');
 
 LocaleConfig.locales['fr'] = {
   monthNames: ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'],
@@ -35,6 +34,7 @@ const emotionColors: { [key: string]: string } = {
 const adUnitId = __DEV__ ? TestIds.BANNER : 'ca-app-pub-5927873314061819/2518464072';
 
 const HomeScreen = () => {
+
   const navigation = useNavigation<any>();
 
   const { selectedDate, setSelectedDate } = useDate();
@@ -42,6 +42,7 @@ const HomeScreen = () => {
   const [markedDates, setMarkedDates] = useState<any>({});
 
   const userId = auth().currentUser?.uid;
+  const { familyMemberIds, family } = useFamily();
 
   const getKoreanDateString = (date: LocalDate) => {
     const days = ['일', '월', '화', '수', '목', '금', '토'];
@@ -65,7 +66,7 @@ const HomeScreen = () => {
   };
 
   useEffect(() => {
-    if (!userId) {
+    if (!userId || familyMemberIds.length === 0) {
       setReceipts([]);
       setMarkedDates({});
       return;
@@ -73,11 +74,10 @@ const HomeScreen = () => {
 
     const unsubscribe = firestore()
       .collection("receipts")
-      .where("userId", "==", userId)
+      .where("userId", "in", familyMemberIds.slice(0, 30)) // Firestore in 쿼리 최대 30개
       .orderBy("createdAt", "desc")
       .onSnapshot((querySnapshot) => {
         if (!querySnapshot) return;
-
         const marks: any = {};
         const allData: any[] = [];
 
@@ -88,9 +88,7 @@ const HomeScreen = () => {
           const dateStr = data.dateString;
           const amountNum = parseInt(data.amount?.toString().replace(/,/g, '') || '0');
 
-          if (!marks[dateStr]) {
-            marks[dateStr] = { totalAmount: 0 };
-          }
+          if (!marks[dateStr]) marks[dateStr] = { totalAmount: 0 };
           marks[dateStr].totalAmount += amountNum;
         });
 
@@ -101,7 +99,7 @@ const HomeScreen = () => {
       });
 
     return () => unsubscribe();
-  }, [userId, selectedDate]);
+  }, [userId, JSON.stringify(familyMemberIds)]);
 
   const filteredList = receipts.filter(item => item.dateString === selectedDate.toString());
 
@@ -243,9 +241,14 @@ const HomeScreen = () => {
               >
                 <Image source={{ uri: item.photoURL }} style={styles.cardImage} />
                 <View style={styles.cardContent}>
+                  {family && family.memberIds.length > 1 && item.userId !== userId && (
+                    <Text style={styles.memberTag}>
+                      {family.members?.[item.userId]?.displayName || '가족 구성원'}
+                    </Text>
+                  )}
                   <View style={styles.cardHeader}>
                     <Text style={[styles.emotionText, { color: emotionColors[item.emotion] || colors.placeHolder }]}>
-                      {item.emotion === 'happy' ? '🛍️ 잘 샀다 ' : '🫠 후회 '}
+                      {item.emotion === 'happy' ? '잘 샀다' : '후회'}
                     </Text>
                     <Text style={styles.amountText}>{Number(item.amount).toLocaleString()}원</Text>
                   </View>
@@ -381,6 +384,12 @@ const styles = StyleSheet.create({
   cardContent: {
     flex: 1,
     marginLeft: 16
+  },
+  memberTag: {
+    fontSize: 11,
+    color: colors.green50,
+    fontWeight: '700',
+    marginBottom: 2,
   },
   cardHeader: {
     flexDirection: 'row',

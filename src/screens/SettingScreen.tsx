@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import {View, TouchableOpacity, StyleSheet, Image, Alert, ScrollView} from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, TouchableOpacity, StyleSheet, Image, Alert, ScrollView, Animated } from 'react-native'
 import { Text } from "../components/Text";
 import auth from '@react-native-firebase/auth';
 import { onGoogleButtonPress } from '../context/AuthContext';
@@ -8,9 +8,24 @@ import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { deleteUserAccount } from '../api/authService';
 import { Ionicons } from '@expo/vector-icons';
 import {colors} from "../theme/colors";
+import {useNavigation} from "@react-navigation/native";
 
 const SettingsScreen = () => {
+
   const [user, setUser] = useState(auth().currentUser);
+  const navigation = useNavigation<any>();
+
+  const [toastMessage, setToastMessage] = useState('');
+  const toastOpacity = useRef(new Animated.Value(0)).current;
+
+  const showToast = (message: string) => {
+    setToastMessage(message);
+    Animated.sequence([
+      Animated.timing(toastOpacity, { toValue: 1, duration: 200, useNativeDriver: true }),
+      Animated.delay(1800),
+      Animated.timing(toastOpacity, { toValue: 0, duration: 300, useNativeDriver: true }),
+    ]).start();
+  };
 
   const googleProfile = user?.providerData.find(p => p.providerId === 'google.com');
 
@@ -146,6 +161,23 @@ const SettingsScreen = () => {
 
           <TouchableOpacity
             style={styles.menuItem}
+            onPress={() => {
+              if (!__DEV__ && (!user || user.isAnonymous)) {
+                showToast('가족연결은 구글 로그인이 필요한 기능이에요');
+                return;
+              }
+              navigation.navigate('Family');
+            }}
+            activeOpacity={0.6}
+          >
+            <Text style={styles.menuItemText}>가족연결</Text>
+            <Ionicons name="chevron-forward" size={16} color={colors.placeHolder} />
+          </TouchableOpacity>
+
+          <View style={styles.menuDivider} />
+
+          <TouchableOpacity
+            style={styles.menuItem}
             onPress={handleDeleteAccount}
             activeOpacity={0.6}
           >
@@ -153,8 +185,14 @@ const SettingsScreen = () => {
             <Ionicons name="chevron-forward" size={16} color={colors.red} />
           </TouchableOpacity>
         </View>
-
       </ScrollView>
+
+      <Animated.View
+        pointerEvents="none"
+        style={[styles.toast, { opacity: toastOpacity }]}
+      >
+        <Text style={styles.toastText}>{toastMessage}</Text>
+      </Animated.View>
     </SafeAreaView>
   );
 };
@@ -178,6 +216,23 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 24
+  },
+
+  toast: {
+    position: 'absolute',
+    bottom: 40,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 24,
+    maxWidth: '80%',
+  },
+  toastText: {
+    color: colors.white,
+    fontSize: 13,
+    fontWeight: '600',
+    textAlign: 'center',
   },
 
   profileCard: {

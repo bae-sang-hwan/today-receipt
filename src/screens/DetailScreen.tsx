@@ -9,10 +9,9 @@ import { DateTimeFormatter, LocalDate } from "@js-joda/core";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {colors} from "../theme/colors";
 
-// 전체 앱과 톤앤매너를 맞춘 소프트 파스텔 컬러 룩업
 const emotionColors: { [key: string]: { bg: string; text: string } } = {
-  happy: { bg: '#f1eefc', text: colors.purple },   // 잘 샀다: 소프트 라벤더
-  regret: { bg: '#fff1f1', text: colors.red },  // 후회: 소프트 코랄 파스텔
+  happy: { bg: '#f1eefc', text: colors.purple },
+  regret: { bg: '#fff1f1', text: colors.red },
 };
 
 const stampImages: { [key: string]: any } = {
@@ -123,7 +122,7 @@ const DetailScreen = ({ route, navigation }: any) => {
           <View style={styles.row}>
             <View style={[styles.emotionBadge, { backgroundColor: emotionColors[item.emotion]?.bg || '#f8f9fc' }]}>
               <Text style={[styles.emotionBadgeText, { color: emotionColors[item.emotion]?.text || '#718096' }]}>
-                {item.emotion === 'happy' ? '🛍️ 잘 샀다 ' : '😭 후회 '}
+                {item.emotion === 'happy' ? '잘 샀다' : '후회'}
               </Text>
             </View>
             <Text style={styles.amountText}>{Number(item.amount).toLocaleString()}원</Text>

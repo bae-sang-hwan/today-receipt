@@ -16,11 +16,9 @@ const stampImages: { [key: string]: any } = {
 };
 
 const SaveCompleteScreen = ({ route }: any) => {
+
   const navigation = useNavigation<any>();
   const [isImageLoaded, setIsImageLoaded] = useState(false);
-
-  // ⭐️ 기기별 하단 내비게이션 바 높이를 동적으로 계산하는 훅
-  const insets = useSafeAreaInsets();
 
   const { photoURL, emotion } = route.params;
   const stampImage = stampImages[emotion] || stampImages.happy;

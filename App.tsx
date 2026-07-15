@@ -18,6 +18,8 @@ import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import { enableScreens } from 'react-native-screens';
 import * as Notifications from 'expo-notifications';
 import {SchedulableTriggerInputTypes} from "expo-notifications";
+import {FamilyProvider} from "./src/context/FamilyContext";
+import FamilyScreen from "./src/screens/FamilyScreen";
 
 enableScreens(false);
 
@@ -142,49 +144,57 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}
                             onLayout={onLayoutRootView}>
       <DateProvider>
-        <SafeAreaProvider>
-          <StatusBar style="auto" />
+        <FamilyProvider>
+          <SafeAreaProvider>
+            <StatusBar style="auto" />
 
-          <NavigationContainer>
-            <Stack.Navigator>
-              {user ? (
-                <>
-                  {/* 1. 메인 탭 화면 (홈, 추가, 리포트 포함) */}
-                  <Stack.Screen
-                    name="Root"
-                    component={TabNavigator}
-                    options={{ headerShown: false }}
-                  />
+            <NavigationContainer>
+              <Stack.Navigator>
+                {user ? (
+                  <>
+                    {/* 1. 메인 탭 화면 (홈, 추가, 리포트 포함) */}
+                    <Stack.Screen
+                      name="Root"
+                      component={TabNavigator}
+                      options={{ headerShown: false }}
+                    />
 
-                  {/* 2. 상세 페이지 */}
-                  <Stack.Screen
-                    name="Detail"
-                    component={DetailScreen}
-                    options={{ headerShown: false }}
-                  />
+                    {/* 2. 상세 페이지 */}
+                    <Stack.Screen
+                      name="Detail"
+                      component={DetailScreen}
+                      options={{ headerShown: false }}
+                    />
 
-                  {/* 2. 수정 페이지 */}
-                  <Stack.Screen
-                    name="Modify"
-                    component={ModifyScreen}
-                    options={{ headerShown: false }}
-                  />
+                    {/* 2. 수정 페이지 */}
+                    <Stack.Screen
+                      name="Modify"
+                      component={ModifyScreen}
+                      options={{ headerShown: false }}
+                    />
 
-                  <Stack.Screen
-                    name="SaveComplete"
-                    component={SaveCompleteScreen}
-                    options={{
-                      headerShown: false,
-                      gestureEnabled: false // 뒤로가기 방지 (선택 사항)
-                    }}
-                  />
-                </>
-              ) : (
-                <Stack.Screen name="LoginError" component={ErrorScreen} />
-              )}
-            </Stack.Navigator>
-          </NavigationContainer>
-        </SafeAreaProvider>
+                    <Stack.Screen
+                      name="SaveComplete"
+                      component={SaveCompleteScreen}
+                      options={{
+                        headerShown: false,
+                        gestureEnabled: false // 뒤로가기 방지 (선택 사항)
+                      }}
+                    />
+
+                    <Stack.Screen
+                      name="Family"
+                      component={FamilyScreen}
+                      options={{ headerShown: false }}
+                    />
+                  </>
+                ) : (
+                  <Stack.Screen name="LoginError" component={ErrorScreen} />
+                )}
+              </Stack.Navigator>
+            </NavigationContainer>
+          </SafeAreaProvider>
+        </FamilyProvider>
       </DateProvider>
     </GestureHandlerRootView>
   );

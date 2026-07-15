@@ -13,7 +13,6 @@ import {
   Alert,
   Platform,
   Modal,
-  Animated,
   KeyboardAvoidingView
 } from 'react-native';
 import { Text } from "../components/Text";
@@ -274,12 +273,12 @@ const ModifyScreen = ({ route }: any) => {
           </Text>
           <View style={styles.emotionRow}>
             <EmotionButton type="happy"
-                           label="🛍️ 잘 샀다 "
+                           label="잘 샀다"
                            selected={emotion === 'happy'}
                            onPress={alertDisabled} />
             <View style={{ width: 12 }} />
             <EmotionButton type="regret"
-                           label="😭 후회 "
+                           label="후회"
                            selected={emotion === 'regret'}
                            onPress={alertDisabled} />
           </View>
