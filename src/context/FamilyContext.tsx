@@ -123,16 +123,19 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
     if (data.familyId === familyId) throw new Error('이미 참여 중인 가족이에요.');
 
-    const targetFamilySnap = await firestore().collection('families').doc(data.familyId).get();
-    const targetMemberIds = (targetFamilySnap.data() as any)?.memberIds || [];
-    if (targetMemberIds.length >= MAX_FAMILY_SIZE) {
-      throw new Error('이 가족은 이미 인원이 가득찼어요.');
+    try {
+      await firestore().collection('families').doc(data.familyId).update({
+        memberIds: firestore.FieldValue.arrayUnion(userId),
+        [`members.${userId}`]: getMyProfile(),
+      });
+    } catch (e: any) {
+      if (e.code === 'firestore/permission-denied') {
+        // 규칙의 memberIds.size() <= 2 조건에 걸린 경우 (인원 초과) 등
+        throw new Error('이 가족은 이미 인원이 가득찼거나 코드가 유효하지 않아요.');
+      }
+      throw e;
     }
 
-    await firestore().collection('families').doc(data.familyId).update({
-      memberIds: firestore.FieldValue.arrayUnion(userId),
-      [`members.${userId}`]: getMyProfile(),
-    });
     await firestore().collection('userFamily').doc(userId).set({ familyId: data.familyId });
   }, [userId, familyId, getMyProfile]);
 
