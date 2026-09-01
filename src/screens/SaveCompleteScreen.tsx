@@ -44,6 +44,7 @@ const SaveCompleteScreen = ({ route }: any) => {
   };
 
   const handleGoHome = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     navigation.dispatch(
       CommonActions.reset({
         index: 0,

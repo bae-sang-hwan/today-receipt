@@ -26,6 +26,8 @@ import { DateTimeFormatter, LocalDate, nativeJs } from "@js-joda/core";
 import { useDate } from "../context/DateContext";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import {colors} from "../theme/colors";
+import { CATEGORIES, CategoryKey, DEFAULT_CATEGORY } from "../constants/categories";
+import { triggerNavHaptic } from "../utils/haptics";
 
 // 변경된 세련된 감정 시그니처 파스텔 매칭 컬러 테이블
 const emotionColors: { [key: string]: { bg: string; text: string; border: string } } = {
@@ -41,6 +43,7 @@ const AddScreen = () => {
   const [image, setImage] = useState<string | null>(null);
   const [amount, setAmount] = useState('');
   const [emotion, setEmotion] = useState<'happy' | 'neutral' | 'regret' | null>(null);
+  const [category, setCategory] = useState<CategoryKey>(DEFAULT_CATEGORY);
   const [loading, setLoading] = useState(false);
   const [memo, setMemo] = useState('');
 
@@ -50,6 +53,7 @@ const AddScreen = () => {
   useFocusEffect(
     useCallback(() => {
       setEmotion('happy');
+      setCategory(DEFAULT_CATEGORY);
       return () => {
         resetField();
       };
@@ -60,6 +64,7 @@ const AddScreen = () => {
     setImage(null);
     setAmount('');
     setEmotion(null);
+    setCategory(DEFAULT_CATEGORY);
     setMemo('');
   };
 
@@ -161,12 +166,14 @@ const AddScreen = () => {
         userId: userId,
         amount: parseInt(amount.replace(/,/g, '')),
         emotion: emotion,
+        category: category,
         memo: memo,
         photoURL: photoURL,
         createdAt: firestore.FieldValue.serverTimestamp(),
         dateString: selectedDate.toString()
       });
 
+      triggerNavHaptic();
       navigation.navigate('SaveComplete', { photoURL, emotion });
       resetField();
 
@@ -220,7 +227,7 @@ const AddScreen = () => {
       >
         {/* 상단 헤더라인 리디자인 */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <TouchableOpacity onPress={() => { triggerNavHaptic(); navigation.goBack(); }} style={styles.backButton}>
             <Ionicons name="chevron-back" size={22} color={colors.o40} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>기록하기</Text>
@@ -312,6 +319,43 @@ const AddScreen = () => {
                            onPress={() => setEmotion('regret')} />
           </View>
 
+          <Text style={styles.label}>카테고리</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.categoryRow}
+          >
+            {CATEGORIES.map((cat) => {
+              const selected = category === cat.key;
+              return (
+                <TouchableOpacity
+                  key={cat.key}
+                  onPress={() => setCategory(cat.key)}
+                  activeOpacity={0.8}
+                  style={[
+                    styles.categoryChip,
+                    selected
+                      ? { backgroundColor: colors.purple50, borderColor: colors.purple }
+                      : { backgroundColor: colors.purple10, borderColor: colors.o5 }
+                  ]}
+                >
+                  <Ionicons
+                    name={cat.icon as any}
+                    size={16}
+                    color={selected ? colors.purple : colors.placeHolder}
+                    style={{ marginRight: 6 }}
+                  />
+                  <Text style={[
+                    styles.categoryChipText,
+                    { color: selected ? colors.purple : colors.placeHolder }
+                  ]}>
+                    {cat.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+
           <Text style={styles.label}>메모 (한 줄 기록)</Text>
           <TextInput
             style={styles.memoInput}
@@ -324,7 +368,7 @@ const AddScreen = () => {
 
           {/* 하단 활성화 세련된 그라데이션 라벤더 저장 버튼 */}
           <TouchableOpacity
-            style={[styles.saveButton, loading && { backgroundColor: colors.white }]}
+            style={styles.saveButton}
             onPress={handleSave}
             disabled={loading}
             activeOpacity={0.8}
@@ -527,6 +571,25 @@ const styles = StyleSheet.create({
   },
   emotionBtnText: {
     fontSize: 14,
+    fontWeight: '600',
+  },
+
+  // 카테고리 태그 선택 칩 구조
+  categoryRow: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingRight: 4,
+  },
+  categoryChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  categoryChipText: {
+    fontSize: 13,
     fontWeight: '600',
   },
 

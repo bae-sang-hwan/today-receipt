@@ -14,6 +14,8 @@ import Svg, { Path } from 'react-native-svg';
 import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
 import {colors} from "../theme/colors";
 import { useFamily } from "../context/FamilyContext";
+import { CATEGORIES, getCategory } from "../constants/categories";
+import { triggerNavHaptic } from "../utils/haptics";
 
 const adUnitId = __DEV__ ? TestIds.BANNER : 'ca-app-pub-5927873314061819/2518464072';
 
@@ -51,6 +53,7 @@ const ReportScreen = () => {
   const { familyMemberIds, family } = useFamily();
 
   const changeMonth = (amount: number) => {
+    triggerNavHaptic();
     setIsUpdating(true);
     setSelectedDate(prev => prev.plusMonths(amount));
   };
@@ -94,11 +97,16 @@ const ReportScreen = () => {
       .where("dateString", "<=", endStr)
       .orderBy("createdAt", "desc")
       .onSnapshot((querySnapshot) => {
+        if (!querySnapshot) return;
         const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setReceipts(data);
         setIsInitialLoading(false);
         setIsUpdating(false);
         setRandomItem(null);
+      }, (error) => {
+        console.error("Firestore 리스너 에러:", error);
+        setIsInitialLoading(false);
+        setIsUpdating(false);
       });
 
     firestore()
@@ -135,6 +143,16 @@ const ReportScreen = () => {
       ? [...receipts].sort((a, b) => Number(b.amount) - Number(a.amount))[0]
       : null;
 
+    const categoryTotals: { [key: string]: number } = {};
+    receipts.forEach(item => {
+      const key = getCategory(item.category).key;
+      categoryTotals[key] = (categoryTotals[key] || 0) + Number(item.amount || 0);
+    });
+    const categoryBreakdown = CATEGORIES
+      .map(cat => ({ ...cat, amount: categoryTotals[cat.key] || 0 }))
+      .filter(cat => cat.amount > 0)
+      .sort((a, b) => b.amount - a.amount);
+
     let praiseMessage = "이번 달 소비를 기록 중이에요! ✨";
     const happyRatio = total > 0 ? (happyTotal / total) * 100 : 0;
 
@@ -154,7 +172,8 @@ const ReportScreen = () => {
       diffAmount: Math.abs(diff),
       isIncreased,
       isDecreased,
-      isSame
+      isSame,
+      categoryBreakdown
     }
   }, [receipts, lastMonthTotal]);
 
@@ -183,7 +202,7 @@ const ReportScreen = () => {
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* 상단 미니멀 헤더 내비게이션 */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <TouchableOpacity onPress={() => { triggerNavHaptic(); navigation.goBack(); }} style={styles.backButton}>
           <Ionicons name="chevron-back" size={22} color={colors.o40} />
         </TouchableOpacity>
 
@@ -297,6 +316,30 @@ const ReportScreen = () => {
                 <Text style={styles.praiseText}>{stats.praiseMessage}</Text>
               </View>
             </View>
+
+            {/* 카테고리별 지출 순위 카드 */}
+            {stats.categoryBreakdown.length > 0 && (
+              <View style={styles.categoryCard}>
+                <Text style={styles.categoryCardTitle}>카테고리별 지출</Text>
+                {stats.categoryBreakdown.map((cat) => {
+                  const ratio = stats.total > 0 ? (cat.amount / stats.total) * 100 : 0;
+                  return (
+                    <View key={cat.key} style={styles.categoryRowItem}>
+                      <View style={styles.categoryRowTop}>
+                        <View style={styles.categoryRowLabel}>
+                          <Ionicons name={cat.icon as any} size={14} color={colors.o40} style={{ marginRight: 6 }} />
+                          <Text style={styles.categoryRowLabelText}>{cat.label}</Text>
+                        </View>
+                        <Text style={styles.categoryRowAmount}>{cat.amount.toLocaleString()}원</Text>
+                      </View>
+                      <View style={styles.categoryBarTrack}>
+                        <View style={[styles.categoryBarFill, { width: `${ratio}%` }]} />
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            )}
 
             {/* 영수증 모양을 빼고 초깔끔 플랫 카드로 변경된 리포트 */}
             <View style={styles.reportCard}>
@@ -524,6 +567,56 @@ const styles = StyleSheet.create({
     width: 1,
     height: 24,
     backgroundColor: colors.o5,
+  },
+
+  // 카테고리별 지출 순위 카드 스타일
+  categoryCard: {
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: colors.o5,
+  },
+  categoryCardTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.black,
+    marginBottom: 14,
+  },
+  categoryRowItem: {
+    marginBottom: 12,
+  },
+  categoryRowTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  categoryRowLabel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  categoryRowLabelText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.black,
+  },
+  categoryRowAmount: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.o40,
+  },
+  categoryBarTrack: {
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.purple10,
+    overflow: 'hidden',
+  },
+  categoryBarFill: {
+    height: '100%',
+    borderRadius: 3,
+    backgroundColor: colors.purple,
   },
 
   // 심플 플랫 형태로 변경된 하단 리포트 카드 디자인

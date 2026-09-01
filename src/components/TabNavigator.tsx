@@ -8,6 +8,7 @@ import AddScreen from "../screens/AddScreen";
 import ReportScreen from "../screens/ReportScreen";
 import SettingScreen from "../screens/SettingScreen";
 import {colors} from "../theme/colors";
+import { triggerNavHaptic } from "../utils/haptics";
 
 const Tab = createBottomTabNavigator();
 
@@ -16,6 +17,9 @@ const TabNavigator = () => {
 
   return (
     <Tab.Navigator
+      screenListeners={{
+        tabPress: () => triggerNavHaptic(),
+      }}
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color }) => {
           let iconName;

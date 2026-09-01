@@ -2,7 +2,8 @@ import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Font from 'expo-font';
 import { Ionicons } from '@expo/vector-icons';
-import {Platform, StyleSheet, Text, View} from 'react-native';
+import {Image, StyleSheet, Text, View} from 'react-native';
+import { Text as AppText } from './src/components/Text';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import {useCallback, useEffect, useState} from "react";
@@ -17,7 +18,7 @@ import SaveCompleteScreen from "./src/screens/SaveCompleteScreen";
 import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import { enableScreens } from 'react-native-screens';
 import * as Notifications from 'expo-notifications';
-import {SchedulableTriggerInputTypes} from "expo-notifications";
+import { getReminderSettings, applyReminderSchedule } from "./src/api/notificationService";
 import {FamilyProvider} from "./src/context/FamilyContext";
 import FamilyScreen from "./src/screens/FamilyScreen";
 
@@ -40,57 +41,12 @@ Notifications.setNotificationHandler({
 export default function App() {
 
   useEffect(() => {
-    // 앱 실행 시 알림 설정 프로세스 시작
-    configureNotifications();
+    // 앱 실행 시 저장된 알림 설정에 맞춰 리마인더 재예약
+    (async () => {
+      const settings = await getReminderSettings();
+      await applyReminderSchedule(settings);
+    })();
   }, []);
-
-  const configureNotifications = async () => {
-    const { status: existingStatus } = await Notifications.getPermissionsAsync();
-
-    let finalStatus = existingStatus;
-
-    if (existingStatus !== 'granted') {
-      const { status } = await Notifications.requestPermissionsAsync();
-      finalStatus = status;
-    }
-
-    if (finalStatus !== 'granted') {
-      console.log('알림 권한 거부됨');
-      return;
-    }
-
-    // 3. 안드로이드 전용 채널 설정 (중요!)
-    if (Platform.OS === 'android') {
-      await Notifications.setNotificationChannelAsync('default', {
-        name: 'default',
-        importance: Notifications.AndroidImportance.MAX, // 중요도 설정
-        vibrationPattern: [0, 250, 250, 250],
-        lightColor: '#FF231F7C',
-      });
-    }
-
-    // 4. 기존 예약된 알림 모두 삭제 (중복 방지)
-    await Notifications.cancelAllScheduledNotificationsAsync();
-
-    // 5. 매일 20시 알림 예약 함수 호출
-    await scheduleDailyPushNotification();
-  };
-
-  const scheduleDailyPushNotification = async () => {
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: "오늘의 영수증 기록하셨나요?",
-        body: '오늘 하루의 소비를 정리하고 감정을 기록해보세요!',
-      },
-      trigger: {
-        type: SchedulableTriggerInputTypes.DAILY,
-        hour: 20,
-        minute: 0,
-        channelId: 'default',
-      } as any,
-    });
-    console.log("매일 20시 알림 예약 완료");
-  };
 
   const [ appIsReady, setAppIsReady ] = useState(false);
   const [ user, setUser ] = useState<FirebaseAuthTypes.User | null>(null);
@@ -131,14 +87,9 @@ export default function App() {
   }, []);
 
   const onLayoutRootView = useCallback(async () => {
-    if (appIsReady) {
-      await SplashScreen.hideAsync();
-    }
-  }, [appIsReady]);
-
-  if (!appIsReady) {
-    return null;
-  }
+    // 네이티브 스플래시는 이 커스텀 부팅 화면이 뜨자마자 바로 내려간다.
+    await SplashScreen.hideAsync();
+  }, []);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}
@@ -148,57 +99,73 @@ export default function App() {
           <SafeAreaProvider>
             <StatusBar style="auto" />
 
-            <NavigationContainer>
-              <Stack.Navigator>
-                {user ? (
-                  <>
-                    {/* 1. 메인 탭 화면 (홈, 추가, 리포트 포함) */}
-                    <Stack.Screen
-                      name="Root"
-                      component={TabNavigator}
-                      options={{ headerShown: false }}
-                    />
+            {!appIsReady ? (
+              <BootSplash />
+            ) : (
+              <NavigationContainer>
+                <Stack.Navigator>
+                  {user ? (
+                    <>
+                      {/* 1. 메인 탭 화면 (홈, 추가, 리포트 포함) */}
+                      <Stack.Screen
+                        name="Root"
+                        component={TabNavigator}
+                        options={{ headerShown: false }}
+                      />
 
-                    {/* 2. 상세 페이지 */}
-                    <Stack.Screen
-                      name="Detail"
-                      component={DetailScreen}
-                      options={{ headerShown: false }}
-                    />
+                      {/* 2. 상세 페이지 */}
+                      <Stack.Screen
+                        name="Detail"
+                        component={DetailScreen}
+                        options={{ headerShown: false }}
+                      />
 
-                    {/* 2. 수정 페이지 */}
-                    <Stack.Screen
-                      name="Modify"
-                      component={ModifyScreen}
-                      options={{ headerShown: false }}
-                    />
+                      {/* 2. 수정 페이지 */}
+                      <Stack.Screen
+                        name="Modify"
+                        component={ModifyScreen}
+                        options={{ headerShown: false }}
+                      />
 
-                    <Stack.Screen
-                      name="SaveComplete"
-                      component={SaveCompleteScreen}
-                      options={{
-                        headerShown: false,
-                        gestureEnabled: false // 뒤로가기 방지 (선택 사항)
-                      }}
-                    />
+                      <Stack.Screen
+                        name="SaveComplete"
+                        component={SaveCompleteScreen}
+                        options={{
+                          headerShown: false,
+                          gestureEnabled: false // 뒤로가기 방지 (선택 사항)
+                        }}
+                      />
 
-                    <Stack.Screen
-                      name="Family"
-                      component={FamilyScreen}
-                      options={{ headerShown: false }}
-                    />
-                  </>
-                ) : (
-                  <Stack.Screen name="LoginError" component={ErrorScreen} />
-                )}
-              </Stack.Navigator>
-            </NavigationContainer>
+                      <Stack.Screen
+                        name="Family"
+                        component={FamilyScreen}
+                        options={{ headerShown: false }}
+                      />
+                    </>
+                  ) : (
+                    <Stack.Screen name="LoginError" component={ErrorScreen} />
+                  )}
+                </Stack.Navigator>
+              </NavigationContainer>
+            )}
           </SafeAreaProvider>
         </FamilyProvider>
       </DateProvider>
     </GestureHandlerRootView>
   );
 }
+
+// 네이티브 스플래시(아이콘만) 다음에 이어서 보여주는 부팅 화면. 아이콘과 텍스트를 각각 실제 컴포넌트로 렌더링한다.
+const BootSplash = () => (
+  <View style={styles.bootSplash}>
+    <Image
+      source={require('./assets/splash-icon.png')}
+      style={styles.bootSplashIcon}
+      resizeMode="contain"
+    />
+    <AppText style={styles.bootSplashText}>오늘의 감성 소비 기록</AppText>
+  </View>
+);
 
 const ErrorScreen = () => (
   <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -212,5 +179,21 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  bootSplash: {
+    flex: 1,
+    backgroundColor: '#caebe4',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bootSplashIcon: {
+    width: 160,
+    height: 160,
+    marginBottom: 20,
+  },
+  bootSplashText: {
+    fontFamily: 'Pretendard-Bold',
+    fontSize: 18,
+    color: '#192434',
   },
 });

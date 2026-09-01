@@ -16,6 +16,9 @@ import { useFamily } from "../context/FamilyContext";
 
 import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
 import {colors} from "../theme/colors";
+import { getCategory } from "../constants/categories";
+import { Ionicons } from '@expo/vector-icons';
+import { triggerNavHaptic } from "../utils/haptics";
 
 LocaleConfig.locales['fr'] = {
   monthNames: ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'],
@@ -58,8 +61,10 @@ const HomeScreen = () => {
       const { translationX } = nativeEvent;
 
       if (translationX < -50) {
+        triggerNavHaptic();
         setSelectedDate(selectedDate.plusDays(1));
       } else if (translationX > 50) {
+        triggerNavHaptic();
         setSelectedDate(selectedDate.minusDays(1));
       }
     }
@@ -126,6 +131,9 @@ const HomeScreen = () => {
           const selectedDate = LocalDate.parse(day.dateString, DateTimeFormatter.ISO_LOCAL_DATE);
           setSelectedDate(selectedDate);
         }}
+        onMonthChange={() => {
+          triggerNavHaptic();
+        }}
 
         renderArrow={(direction) => (
           <View style={styles.arrowButtonContainer}>
@@ -154,6 +162,7 @@ const HomeScreen = () => {
             <TouchableOpacity
               style={[styles.dayContainer, isSelected && styles.selectedDay]}
               onPress={() => {
+                triggerNavHaptic();
                 const newDate = LocalDate.parse(dateStr, DateTimeFormatter.ISO_LOCAL_DATE);
                 setSelectedDate(newDate);
               }}
@@ -174,15 +183,14 @@ const HomeScreen = () => {
               </Text>
 
               {dayData && dayData.totalAmount > 0 && (
-                isSelected ? (
-                  <Text style={[styles.amountDayText, { color: colors.white }]} numberOfLines={1}>
-                    {dayData.totalAmount >= 10000
-                      ? `${Math.floor(dayData.totalAmount / 1000) / 10}만`
-                      : dayData.totalAmount.toLocaleString()}
-                  </Text>
-                ) : (
-                  <View style={styles.recordDot} />
-                )
+                <Text
+                  style={[styles.amountDayText, { color: isSelected ? colors.white : colors.purple }]}
+                  numberOfLines={1}
+                >
+                  {dayData.totalAmount >= 10000
+                    ? `${Math.floor(dayData.totalAmount / 1000) / 10}만`
+                    : dayData.totalAmount.toLocaleString()}
+                </Text>
               )}
             </TouchableOpacity>
           );
@@ -237,7 +245,7 @@ const HomeScreen = () => {
               <TouchableOpacity
                 style={styles.card}
                 activeOpacity={0.9}
-                onPress={() => navigation.navigate('Detail', { item })}
+                onPress={() => { triggerNavHaptic(); navigation.navigate('Detail', { item }); }}
               >
                 <Image source={{ uri: item.photoURL }} style={styles.cardImage} />
                 <View style={styles.cardContent}>
@@ -247,9 +255,15 @@ const HomeScreen = () => {
                     </Text>
                   )}
                   <View style={styles.cardHeader}>
-                    <Text style={[styles.emotionText, { color: emotionColors[item.emotion] || colors.placeHolder }]}>
-                      {item.emotion === 'happy' ? '잘 샀다' : '후회'}
-                    </Text>
+                    <View style={styles.cardHeaderLeft}>
+                      <Text style={[styles.emotionText, { color: emotionColors[item.emotion] || colors.placeHolder }]}>
+                        {item.emotion === 'happy' ? '잘 샀다' : '후회'}
+                      </Text>
+                      <View style={styles.categoryTag}>
+                        <Ionicons name={getCategory(item.category).icon as any} size={11} color={colors.o40} style={{ marginRight: 3 }} />
+                        <Text style={styles.categoryTagText}>{getCategory(item.category).label}</Text>
+                      </View>
+                    </View>
                     <Text style={styles.amountText}>{Number(item.amount).toLocaleString()}원</Text>
                   </View>
                   <Text style={styles.memoText} numberOfLines={1}>
@@ -321,14 +335,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 2,
   },
-  recordDot: {
-    position: 'absolute',
-    bottom: 4,
-    width: 4,
-    height: 4,
-    backgroundColor: colors.purple,
-    borderRadius: 2,
-  },
   detailsContainer: {
     flex: 1,
     backgroundColor: colors.purple10,
@@ -394,11 +400,30 @@ const styles = StyleSheet.create({
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 6
+  },
+  cardHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   emotionText: {
     fontSize: 14,
     fontWeight: '700'
+  },
+  categoryTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    backgroundColor: colors.purple10,
+  },
+  categoryTagText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.o40,
   },
   amountText: {
     fontSize: 15,

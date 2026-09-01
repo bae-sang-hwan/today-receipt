@@ -7,6 +7,7 @@ import auth from '@react-native-firebase/auth';
 import { useNavigation } from '@react-navigation/native';
 import { useFamily } from '../context/FamilyContext';
 import { colors } from '../theme/colors';
+import { triggerNavHaptic } from '../utils/haptics';
 
 const FamilyScreen = () => {
   const navigation = useNavigation<any>();
@@ -93,7 +94,7 @@ const FamilyScreen = () => {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <TouchableOpacity onPress={() => { triggerNavHaptic(); navigation.goBack(); }} style={styles.backButton}>
           <Ionicons name="chevron-back" size={22} color={colors.o40} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>가족연결</Text>

@@ -24,6 +24,8 @@ import { ActivityIndicator } from 'react-native';
 import { DateTimeFormatter, LocalDate, nativeJs } from "@js-joda/core";
 import { useNavigation } from "@react-navigation/native";
 import {colors} from "../theme/colors";
+import { CATEGORIES, CategoryKey, DEFAULT_CATEGORY } from "../constants/categories";
+import { triggerNavHaptic } from "../utils/haptics";
 
 const emotionColors: { [key: string]: { bg: string; text: string; border: string } } = {
   happy: { bg: colors.purple50, text: colors.purple, border: colors.purple },
@@ -41,6 +43,7 @@ const ModifyScreen = ({ route }: any) => {
   const [image, setImage] = useState<string | null>(item.photoURL);
   const [amount, setAmount] = useState(item.amount.toLocaleString());
   const [emotion, setEmotion] = useState<'happy' | 'neutral' | 'regret' | null>(item.emotion);
+  const [category, setCategory] = useState<CategoryKey>(item.category || DEFAULT_CATEGORY);
   const [loading, setLoading] = useState(false);
   const [memo, setMemo] = useState(item.memo || '');
 
@@ -113,33 +116,38 @@ const ModifyScreen = ({ route }: any) => {
 
     try {
       let finalPhotoURL = item.photoURL;
+      let shouldDeleteOldImage = false;
 
       if (image !== item.photoURL) {
         if (image.startsWith('file://') || image.startsWith('content://')) {
-          try {
-            await storage().refFromURL(item.photoURL).delete();
-          } catch (deleteError) {
-            console.warn("기존 이미지 삭제 실패:", deleteError);
-          }
-
           const filename = image.substring(image.lastIndexOf('/') + 1);
           const storageRef = storage().ref(`receipts/${item.userId}/${LocalDate.now()}_${filename}`);
           await storageRef.putFile(image);
           finalPhotoURL = await storageRef.getDownloadURL();
+          shouldDeleteOldImage = true;
         }
       }
 
       await firestore().collection("receipts").doc(item.id).update({
         amount: parseInt(amount.replace(/,/g, '')),
         emotion: emotion,
+        category: category,
         memo: memo,
         photoURL: finalPhotoURL,
         updatedAt: firestore.FieldValue.serverTimestamp(),
         dateString: modifyDate.toString()
       });
 
+      if (shouldDeleteOldImage) {
+        try {
+          await storage().refFromURL(item.photoURL).delete();
+        } catch (deleteError) {
+          console.warn("기존 이미지 삭제 실패:", deleteError);
+        }
+      }
+
       Alert.alert("성공", "영수증 기록이 수정되었습니다!", [
-        { text: "확인", onPress: () => navigation.popToTop() }
+        { text: "확인", onPress: () => { triggerNavHaptic(); navigation.popToTop(); } }
       ]);
 
     } catch (error) {
@@ -192,17 +200,15 @@ const ModifyScreen = ({ route }: any) => {
       >
         {/* 상단 정갈한 미니멀 헤더 */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <TouchableOpacity onPress={() => { triggerNavHaptic(); navigation.goBack(); }} style={styles.backButton}>
             <Ionicons name="chevron-back" size={22} color={colors.o40} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>기록 수정하기</Text>
           <View style={{ width: 32 }} />
         </View>
 
-        <ScrollView contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: insets.bottom + 24 }
-        ]}
+        <ScrollView style={{ flex: 1 }}
+                    contentContainerStyle={styles.scrollContent}
                     keyboardShouldPersistTaps="handled"
                     showsVerticalScrollIndicator={false}>
           <Text style={styles.label}>
@@ -283,6 +289,43 @@ const ModifyScreen = ({ route }: any) => {
                            onPress={alertDisabled} />
           </View>
 
+          <Text style={styles.label}>카테고리</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.categoryRow}
+          >
+            {CATEGORIES.map((cat) => {
+              const selected = category === cat.key;
+              return (
+                <TouchableOpacity
+                  key={cat.key}
+                  onPress={() => setCategory(cat.key)}
+                  activeOpacity={0.8}
+                  style={[
+                    styles.categoryChip,
+                    selected
+                      ? { backgroundColor: colors.purple50, borderColor: colors.purple }
+                      : { backgroundColor: colors.purple10, borderColor: colors.o5 }
+                  ]}
+                >
+                  <Ionicons
+                    name={cat.icon as any}
+                    size={16}
+                    color={selected ? colors.purple : colors.placeHolder}
+                    style={{ marginRight: 6 }}
+                  />
+                  <Text style={[
+                    styles.categoryChipText,
+                    { color: selected ? colors.purple : colors.placeHolder }
+                  ]}>
+                    {cat.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+
           <Text style={styles.label}>메모 (한 줄 기록)</Text>
           <TextInput
             style={styles.memoInput}
@@ -292,9 +335,11 @@ const ModifyScreen = ({ route }: any) => {
             onChangeText={setMemo}
             maxLength={40}
           />
+        </ScrollView>
 
+        <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
           <TouchableOpacity
-            style={[styles.saveButton, loading && { backgroundColor: colors.white }]}
+            style={styles.saveButton}
             onPress={handleModify}
             disabled={loading}
             activeOpacity={0.8}
@@ -305,7 +350,7 @@ const ModifyScreen = ({ route }: any) => {
               <Text style={styles.saveButtonText}>수정 완료</Text>
             )}
           </TouchableOpacity>
-        </ScrollView>
+        </View>
       </KeyboardAvoidingView>
 
       {/* 바텀 모달 시트 리디자인 */}
@@ -366,7 +411,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 24,
     paddingTop: 0,
-    paddingBottom: 0,
+    paddingBottom: 24,
   },
   label: {
     fontSize: 14,
@@ -481,6 +526,25 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
+  // 카테고리 태그 선택 칩 구조
+  categoryRow: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingRight: 4,
+  },
+  categoryChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  categoryChipText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+
   // 날짜 피커 버튼 박스 스타일링
   dateSelector: {
     flexDirection: 'row',
@@ -522,12 +586,18 @@ const styles = StyleSheet.create({
     backgroundColor: colors.purple10,
   },
 
-  // 저장 메인 서브밋 구조 변경
+  // 하단 고정 저장 버튼 푸터
+  footer: {
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    backgroundColor: colors.white,
+    borderTopWidth: 1,
+    borderTopColor: colors.o5,
+  },
   saveButton: {
     backgroundColor: colors.purple,
     paddingVertical: 18,
     borderRadius: 16,
-    marginTop: 40,
     alignItems: 'center',
   },
   saveButtonText: {

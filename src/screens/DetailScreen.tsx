@@ -5,9 +5,12 @@ import { Text } from "../components/Text";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import firestore from '@react-native-firebase/firestore';
+import auth from '@react-native-firebase/auth';
 import { DateTimeFormatter, LocalDate } from "@js-joda/core";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {colors} from "../theme/colors";
+import { getCategory } from "../constants/categories";
+import { triggerNavHaptic } from "../utils/haptics";
 
 const emotionColors: { [key: string]: { bg: string; text: string } } = {
   happy: { bg: '#f1eefc', text: colors.purple },
@@ -25,6 +28,8 @@ const DetailScreen = ({ route, navigation }: any) => {
 
   const [isSheetVisible, setIsSheetVisible] = useState(false);
   const stampImage = stampImages[item.emotion] || stampImages.happy;
+  const category = getCategory(item.category);
+  const isOwner = item.userId === auth().currentUser?.uid;
 
   const translateY = useRef(new Animated.Value(300)).current;
 
@@ -55,6 +60,7 @@ const DetailScreen = ({ route, navigation }: any) => {
 
   const handleEditPress = () => {
     setIsSheetVisible(false);
+    triggerNavHaptic();
     navigation.navigate('Modify', { item: item });
   };
 
@@ -79,6 +85,7 @@ const DetailScreen = ({ route, navigation }: any) => {
     try {
       await firestore().collection("receipts").doc(item.id).delete();
       Alert.alert("삭제 완료", "기록이 성공적으로 삭제되었습니다.");
+      triggerNavHaptic();
       navigation.goBack();
     } catch (error) {
       console.error("삭제 중 오류:", error);
@@ -90,13 +97,17 @@ const DetailScreen = ({ route, navigation }: any) => {
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* 상단 미니멀 네비게이션 헤더 */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.headerButton} onPress={() => navigation.goBack()}>
+        <TouchableOpacity style={styles.headerButton} onPress={() => { triggerNavHaptic(); navigation.goBack(); }}>
           <Ionicons name="chevron-back" size={22} color="#718096" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>지출 상세</Text>
-        <TouchableOpacity style={styles.headerButton} onPress={() => setIsSheetVisible(true)}>
-          <Ionicons name="ellipsis-horizontal" size={20} color="#718096" />
-        </TouchableOpacity>
+        {isOwner ? (
+          <TouchableOpacity style={styles.headerButton} onPress={() => setIsSheetVisible(true)}>
+            <Ionicons name="ellipsis-horizontal" size={20} color="#718096" />
+          </TouchableOpacity>
+        ) : (
+          <View style={[styles.headerButton, { width: 20 + 6 * 2 }]} />
+        )}
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
@@ -120,10 +131,16 @@ const DetailScreen = ({ route, navigation }: any) => {
           </Text>
 
           <View style={styles.row}>
-            <View style={[styles.emotionBadge, { backgroundColor: emotionColors[item.emotion]?.bg || '#f8f9fc' }]}>
-              <Text style={[styles.emotionBadgeText, { color: emotionColors[item.emotion]?.text || '#718096' }]}>
-                {item.emotion === 'happy' ? '잘 샀다' : '후회'}
-              </Text>
+            <View style={styles.badgeGroup}>
+              <View style={[styles.emotionBadge, { backgroundColor: emotionColors[item.emotion]?.bg || '#f8f9fc' }]}>
+                <Text style={[styles.emotionBadgeText, { color: emotionColors[item.emotion]?.text || '#718096' }]}>
+                  {item.emotion === 'happy' ? '잘 샀다' : '후회'}
+                </Text>
+              </View>
+              <View style={styles.categoryBadge}>
+                <Ionicons name={category.icon as any} size={12} color={colors.o40} style={{ marginRight: 4 }} />
+                <Text style={styles.categoryBadgeText}>{category.label}</Text>
+              </View>
             </View>
             <Text style={styles.amountText}>{Number(item.amount).toLocaleString()}원</Text>
           </View>
@@ -252,6 +269,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center'
   },
+  badgeGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
   emotionBadge: {
     paddingHorizontal: 14,
     paddingVertical: 6,
@@ -260,6 +282,21 @@ const styles = StyleSheet.create({
   emotionBadgeText: {
     fontSize: 13,
     fontWeight: '700',
+  },
+  categoryBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+    backgroundColor: '#f8f9fc',
+    borderWidth: 1,
+    borderColor: '#edf2f7',
+  },
+  categoryBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.o40,
   },
   amountText: {
     fontSize: 24,

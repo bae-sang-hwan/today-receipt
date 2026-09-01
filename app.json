@@ -6,11 +6,6 @@
     "orientation": "portrait",
     "icon": "./assets/today-icon.png",
     "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/today-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
     "notification": {
       "icon": "./assets/today-icon.png",
       "color": "#ffffff"
@@ -43,6 +38,15 @@
       "@react-native-firebase/app",
       "@react-native-firebase/auth",
       "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#caebe4"
+        }
+      ],
       [
         "react-native-google-mobile-ads",
         {

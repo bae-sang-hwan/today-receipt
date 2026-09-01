@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, TouchableOpacity, StyleSheet, Image, Alert, ScrollView, Animated } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, Image, Alert, ScrollView, Animated, Switch } from 'react-native'
 import { Text } from "../components/Text";
 import auth from '@react-native-firebase/auth';
 import { onGoogleButtonPress } from '../context/AuthContext';
@@ -9,6 +9,8 @@ import { deleteUserAccount } from '../api/authService';
 import { Ionicons } from '@expo/vector-icons';
 import {colors} from "../theme/colors";
 import {useNavigation} from "@react-navigation/native";
+import { ReminderSettings, getReminderSettings, saveReminderSettings, applyReminderSchedule } from '../api/notificationService';
+import { triggerNavHaptic } from '../utils/haptics';
 
 const SettingsScreen = () => {
 
@@ -17,6 +19,34 @@ const SettingsScreen = () => {
 
   const [toastMessage, setToastMessage] = useState('');
   const toastOpacity = useRef(new Animated.Value(0)).current;
+
+  const [reminder, setReminder] = useState<ReminderSettings>({ enabled: true });
+  const [reminderBusy, setReminderBusy] = useState(false);
+
+  useEffect(() => {
+    getReminderSettings().then(setReminder);
+  }, []);
+
+  const updateReminder = async (next: ReminderSettings) => {
+    setReminder(next);
+    setReminderBusy(true);
+    try {
+      await saveReminderSettings(next);
+      const granted = await applyReminderSchedule(next);
+      if (!granted) {
+        showToast('알림 권한이 꺼져있어요. 기기 설정에서 허용해주세요.');
+        const fallback = { ...next, enabled: false };
+        setReminder(fallback);
+        await saveReminderSettings(fallback);
+      }
+    } finally {
+      setReminderBusy(false);
+    }
+  };
+
+  const onToggleReminder = (enabled: boolean) => {
+    updateReminder({ ...reminder, enabled });
+  };
 
   const showToast = (message: string) => {
     setToastMessage(message);
@@ -152,6 +182,22 @@ const SettingsScreen = () => {
         </View>
 
         <View style={styles.menuCard}>
+          <View style={styles.reminderRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.menuItemText}>일일 기록 알림</Text>
+              <Text style={styles.reminderSubText}>매일 저녁 8시에 기록을 남겼는지 알려드려요</Text>
+            </View>
+            <Switch
+              value={reminder.enabled}
+              onValueChange={onToggleReminder}
+              disabled={reminderBusy}
+              trackColor={{ false: colors.o5, true: colors.purple50 }}
+              thumbColor={reminder.enabled ? colors.purple : colors.white}
+            />
+          </View>
+
+          <View style={styles.menuDivider} />
+
           <View style={styles.menuItem}>
             <Text style={styles.menuItemText}>현재 버전</Text>
             <Text style={styles.versionText}>1.0.2</Text>
@@ -166,6 +212,7 @@ const SettingsScreen = () => {
                 showToast('가족연결은 구글 로그인이 필요한 기능이에요');
                 return;
               }
+              triggerNavHaptic();
               navigation.navigate('Family');
             }}
             activeOpacity={0.6}
@@ -345,6 +392,17 @@ const styles = StyleSheet.create({
   },
   menuCard: {
     backgroundColor: colors.white,
+  },
+  reminderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+  },
+  reminderSubText: {
+    fontSize: 12,
+    color: colors.placeHolder,
+    marginTop: 2,
   },
   menuItem: {
     flexDirection: 'row',

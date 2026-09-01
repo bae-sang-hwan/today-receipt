@@ -82,28 +82,34 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (!userId) throw new Error('로그인이 필요합니다.');
 
     let fid = familyId;
+    const code = generateCode();
+    const batch = firestore().batch();
 
     if (!fid) {
       const ref = firestore().collection('families').doc();
       fid = ref.id;
-      await ref.set({
+      batch.set(ref, {
         ownerId: userId,
         memberIds: [userId],
         members: { [userId]: getMyProfile() },
+        inviteCode: code,
         createdAt: firestore.FieldValue.serverTimestamp(),
       });
-      await firestore().collection('userFamily').doc(userId).set({ familyId: fid });
-    } else if (family && family.memberIds.length >= MAX_FAMILY_SIZE) {
-      throw new Error('가족은 최대 2명까지 등록할 수 있어요.');
+      batch.set(firestore().collection('userFamily').doc(userId), { familyId: fid });
+    } else {
+      if (family && family.memberIds.length >= MAX_FAMILY_SIZE) {
+        throw new Error('가족은 최대 2명까지 등록할 수 있어요.');
+      }
+      batch.update(firestore().collection('families').doc(fid), { inviteCode: code });
     }
 
-    const code = generateCode();
-    await firestore().collection('inviteCodes').doc(code).set({
+    batch.set(firestore().collection('inviteCodes').doc(code), {
       familyId: fid,
       createdBy: userId,
       createdAt: firestore.FieldValue.serverTimestamp(),
     });
-    await firestore().collection('families').doc(fid).update({ inviteCode: code });
+
+    await batch.commit();
     return code;
   }, [userId, familyId, family, getMyProfile]);
 
@@ -123,11 +129,15 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
     if (data.familyId === familyId) throw new Error('이미 참여 중인 가족이에요.');
 
+    const batch = firestore().batch();
+    batch.update(firestore().collection('families').doc(data.familyId), {
+      memberIds: firestore.FieldValue.arrayUnion(userId),
+      [`members.${userId}`]: getMyProfile(),
+    });
+    batch.set(firestore().collection('userFamily').doc(userId), { familyId: data.familyId });
+
     try {
-      await firestore().collection('families').doc(data.familyId).update({
-        memberIds: firestore.FieldValue.arrayUnion(userId),
-        [`members.${userId}`]: getMyProfile(),
-      });
+      await batch.commit();
     } catch (e: any) {
       if (e.code === 'firestore/permission-denied') {
         // 규칙의 memberIds.size() <= 2 조건에 걸린 경우 (인원 초과) 등
@@ -135,8 +145,6 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }
       throw e;
     }
-
-    await firestore().collection('userFamily').doc(userId).set({ familyId: data.familyId });
   }, [userId, familyId, getMyProfile]);
 
   const leaveFamily = useCallback(async () => {
@@ -146,16 +154,18 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const data = snap.data() as any;
     const remaining = (data?.memberIds || []).filter((id: string) => id !== userId);
 
+    const batch = firestore().batch();
     if (remaining.length === 0) {
-      await familyRef.delete();
+      batch.delete(familyRef);
     } else {
-      await familyRef.update({
+      batch.update(familyRef, {
         memberIds: firestore.FieldValue.arrayRemove(userId),
         [`members.${userId}`]: firestore.FieldValue.delete(),
         ...(data?.ownerId === userId ? { ownerId: remaining[0] } : {}),
       });
     }
-    await firestore().collection('userFamily').doc(userId).delete();
+    batch.delete(firestore().collection('userFamily').doc(userId));
+    await batch.commit();
   }, [userId, familyId]);
 
   const removeMember = useCallback(async (targetUid: string) => {
@@ -163,11 +173,13 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (family.ownerId !== userId) throw new Error('가족장만 구성원을 내보낼 수 있어요.');
     if (targetUid === userId) throw new Error('본인은 나가기를 이용해주세요.');
 
-    await firestore().collection('families').doc(familyId).update({
+    const batch = firestore().batch();
+    batch.update(firestore().collection('families').doc(familyId), {
       memberIds: firestore.FieldValue.arrayRemove(targetUid),
       [`members.${targetUid}`]: firestore.FieldValue.delete(),
     });
-    await firestore().collection('userFamily').doc(targetUid).delete();
+    batch.delete(firestore().collection('userFamily').doc(targetUid));
+    await batch.commit();
   }, [userId, familyId, family]);
 
   const familyMemberIds = family?.memberIds?.length ? family.memberIds : (userId ? [userId] : []);
