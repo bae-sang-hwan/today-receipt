@@ -1,6 +1,6 @@
 {
   "name": "today-receipt",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "main": "index.ts",
   "scripts": {
     "start": "expo start -c",
@@ -29,6 +29,7 @@
     "expo": "~55.0.8",
     "expo-blur": "~55.0.10",
     "expo-build-properties": "~55.0.10",
+    "expo-constants": "~55.0.16",
     "expo-dev-client": "~55.0.19",
     "expo-device": "~55.0.14",
     "expo-font": "~55.0.4",

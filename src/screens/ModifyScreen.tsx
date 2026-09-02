@@ -2,7 +2,7 @@ import storage from '@react-native-firebase/storage';
 import firestore from '@react-native-firebase/firestore';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -13,6 +13,8 @@ import {
   Alert,
   Platform,
   Modal,
+  Animated,
+  Easing,
   KeyboardAvoidingView
 } from 'react-native';
 import { Text } from "../components/Text";
@@ -39,6 +41,8 @@ const ModifyScreen = ({ route }: any) => {
   const insets = useSafeAreaInsets();
 
   const [isSheetVisible, setIsSheetVisible] = useState(false);
+  const overlayOpacity = useRef(new Animated.Value(0)).current;
+  const sheetTranslateY = useRef(new Animated.Value(320)).current;
 
   const [image, setImage] = useState<string | null>(item.photoURL);
   const [amount, setAmount] = useState(item.amount.toLocaleString());
@@ -70,6 +74,37 @@ const ModifyScreen = ({ route }: any) => {
 
   const pickImage = () => {
     setIsSheetVisible(true);
+  };
+
+  // 시트가 뜰 때: 어두운 배경은 이미 떠 있는 것처럼 빠르게 페이드인, 시트만 아래에서 슬라이드업.
+  useEffect(() => {
+    if (!isSheetVisible) return;
+    overlayOpacity.setValue(0);
+    sheetTranslateY.setValue(320);
+    Animated.parallel([
+      Animated.timing(overlayOpacity, { toValue: 1, duration: 200, useNativeDriver: true }),
+      Animated.timing(sheetTranslateY, {
+        toValue: 0,
+        duration: 260,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [isSheetVisible]);
+
+  const closeSheet = (after?: () => void) => {
+    Animated.parallel([
+      Animated.timing(overlayOpacity, { toValue: 0, duration: 180, useNativeDriver: true }),
+      Animated.timing(sheetTranslateY, {
+        toValue: 320,
+        duration: 220,
+        easing: Easing.in(Easing.cubic),
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setIsSheetVisible(false);
+      after?.();
+    });
   };
 
   const openCamera = async () => {
@@ -212,7 +247,7 @@ const ModifyScreen = ({ route }: any) => {
                     keyboardShouldPersistTaps="handled"
                     showsVerticalScrollIndicator={false}>
           <Text style={styles.label}>
-            영수증 / 지출 사진<Text style={styles.required}>*</Text>
+            사진<Text style={styles.required}>*</Text>
           </Text>
 
           <View style={styles.imageContainer}>
@@ -300,7 +335,7 @@ const ModifyScreen = ({ route }: any) => {
               return (
                 <TouchableOpacity
                   key={cat.key}
-                  onPress={() => setCategory(cat.key)}
+                  onPress={() => { triggerNavHaptic(); setCategory(cat.key); }}
                   activeOpacity={0.8}
                   style={[
                     styles.categoryChip,
@@ -353,32 +388,37 @@ const ModifyScreen = ({ route }: any) => {
         </View>
       </KeyboardAvoidingView>
 
-      {/* 바텀 모달 시트 리디자인 */}
+      {/* 바텀 모달 시트 리디자인: 어두운 배경은 미리 떠 있는 것처럼 빠르게 페이드인되고, 시트만 아래에서 슬라이드업 */}
       <Modal visible={isSheetVisible}
              transparent={true}
-             animationType="slide"
-             onRequestClose={() => setIsSheetVisible(false)}>
-        <View style={styles.modalOverlay}>
-          <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={() => setIsSheetVisible(false)} />
-          <View style={[styles.sheetContainer, { paddingBottom: insets.bottom + 16 }]}>
+             animationType="none"
+             onRequestClose={() => closeSheet()}>
+        <Animated.View style={[styles.modalOverlay, { opacity: overlayOpacity }]}>
+          <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={() => closeSheet()} />
+          <Animated.View
+            style={[
+              styles.sheetContainer,
+              { paddingBottom: insets.bottom + 16, transform: [{ translateY: sheetTranslateY }] },
+            ]}
+          >
             <View style={styles.sheetHandle} />
             <Text style={styles.sheetTitle}>사진 가져오기</Text>
 
-            <TouchableOpacity style={styles.sheetButton} onPress={() => { setIsSheetVisible(false); setTimeout(() => openCamera(), 300); }}>
+            <TouchableOpacity style={styles.sheetButton} onPress={() => closeSheet(() => openCamera())}>
               <View style={[styles.sheetIconBox, { backgroundColor: colors.purple50 }]}>
                 <Ionicons name="camera" size={20} color={colors.purple} />
               </View>
               <Text style={styles.sheetButtonText}>직접 촬영하기</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.sheetButton} onPress={() => { setIsSheetVisible(false); setTimeout(() => openLibrary(), 300); }}>
+            <TouchableOpacity style={styles.sheetButton} onPress={() => closeSheet(() => openLibrary())}>
               <View style={[styles.sheetIconBox, { backgroundColor: colors.o5 }]}>
                 <Ionicons name="images" size={20} color={colors.o40} />
               </View>
               <Text style={styles.sheetButtonText}>갤러리에서 선택</Text>
             </TouchableOpacity>
-          </View>
-        </View>
+          </Animated.View>
+        </Animated.View>
       </Modal>
     </SafeAreaView>
   );

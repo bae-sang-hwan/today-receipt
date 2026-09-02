@@ -19,8 +19,12 @@ import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import { enableScreens } from 'react-native-screens';
 import * as Notifications from 'expo-notifications';
 import { getReminderSettings, applyReminderSchedule } from "./src/api/notificationService";
+import { registerPushToken } from "./src/api/pushTokenService";
 import {FamilyProvider} from "./src/context/FamilyContext";
 import FamilyScreen from "./src/screens/FamilyScreen";
+import TreeStageDevScreen from "./src/screens/TreeStageDevScreen";
+import ForceUpdateScreen from "./src/screens/ForceUpdateScreen";
+import { checkForceUpdate, ForceUpdateInfo } from "./src/api/versionService";
 
 enableScreens(false);
 
@@ -50,6 +54,7 @@ export default function App() {
 
   const [ appIsReady, setAppIsReady ] = useState(false);
   const [ user, setUser ] = useState<FirebaseAuthTypes.User | null>(null);
+  const [ forceUpdateInfo, setForceUpdateInfo ] = useState<ForceUpdateInfo | null>(null);
 
   useEffect(() => {
     const unsubscribe = auth().onAuthStateChanged(async (currentUser) => {
@@ -73,6 +78,9 @@ export default function App() {
         await Font.loadAsync(Ionicons.font);
         // 초기 구동 시 유저 생성 (이미 되어있다면 내부에서 fetch)
         await getOrCreateUser();
+        // 인증 이후에 체크: config/app 문서 조회에 로그인 상태가 필요할 수 있어서
+        const updateInfo = await checkForceUpdate();
+        setForceUpdateInfo(updateInfo);
         await new Promise(resolve => setTimeout(resolve, 1000));
       } catch (e) {
         console.warn("초기화 에러:", e);
@@ -85,6 +93,13 @@ export default function App() {
 
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    // 가족 소비 알림을 받으려면 구글 로그인 사용자여야 함 (익명 계정은 가족연결 자체가 안 됨)
+    if (user && !user.isAnonymous) {
+      registerPushToken(user.uid);
+    }
+  }, [user]);
 
   const onLayoutRootView = useCallback(async () => {
     // 네이티브 스플래시는 이 커스텀 부팅 화면이 뜨자마자 바로 내려간다.
@@ -101,6 +116,12 @@ export default function App() {
 
             {!appIsReady ? (
               <BootSplash />
+            ) : forceUpdateInfo?.required ? (
+              <ForceUpdateScreen
+                message={forceUpdateInfo.message}
+                storeUrl={forceUpdateInfo.storeUrl}
+                webStoreUrl={forceUpdateInfo.webStoreUrl}
+              />
             ) : (
               <NavigationContainer>
                 <Stack.Navigator>
@@ -141,6 +162,14 @@ export default function App() {
                         component={FamilyScreen}
                         options={{ headerShown: false }}
                       />
+
+                      {__DEV__ && (
+                        <Stack.Screen
+                          name="TreeStageDev"
+                          component={TreeStageDevScreen}
+                          options={{ headerShown: false }}
+                        />
+                      )}
                     </>
                   ) : (
                     <Stack.Screen name="LoginError" component={ErrorScreen} />
@@ -187,8 +216,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   bootSplashIcon: {
-    width: 160,
-    height: 160,
+    // 네이티브 스플래시의 imageWidth(app.json expo-splash-screen 설정)와 동일하게 맞춰서 전환 시 크기 점프 방지
+    width: 200,
+    height: 200,
     marginBottom: 20,
   },
   bootSplashText: {

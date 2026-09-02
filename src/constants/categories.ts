@@ -17,7 +17,7 @@ export const CATEGORIES: CategoryDef[] = [
   { key: 'etc', label: '기타', icon: 'ellipsis-horizontal-circle-outline' },
 ];
 
-export const DEFAULT_CATEGORY: CategoryKey = 'etc';
+export const DEFAULT_CATEGORY: CategoryKey = 'food';
 
 export const getCategory = (key?: string | null): CategoryDef => {
   return CATEGORIES.find(c => c.key === key) ?? CATEGORIES.find(c => c.key === DEFAULT_CATEGORY)!;

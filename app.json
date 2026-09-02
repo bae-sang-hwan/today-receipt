@@ -2,7 +2,7 @@
   "expo": {
     "name": "오늘의 영수증",
     "slug": "today-receipt",
-    "version": "1.0.3",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/today-icon.png",
     "userInterfaceStyle": "light",
@@ -41,9 +41,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/splash-icon.png",
-          "imageWidth": 200,
-          "resizeMode": "contain",
+          "image": "./assets/splash-blank.png",
           "backgroundColor": "#caebe4"
         }
       ],
@@ -67,6 +65,8 @@
           "android": {
             "enableOnBackInvokedCallback": true,
             "extraGCMSenderIds": [],
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true,
             "packagingOptions": {
               "pickFirst": [
                 "**/libjsc.so"

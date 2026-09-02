@@ -7,6 +7,7 @@ import HomeScreen from "../screens/HomeScreen";
 import AddScreen from "../screens/AddScreen";
 import ReportScreen from "../screens/ReportScreen";
 import SettingScreen from "../screens/SettingScreen";
+import TreeScreen from "../screens/TreeScreen";
 import {colors} from "../theme/colors";
 import { triggerNavHaptic } from "../utils/haptics";
 
@@ -22,6 +23,15 @@ const TabNavigator = () => {
       }}
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color }) => {
+          // 나무 탭은 다른 탭과 다르게 동그란 배지 형태로 강조
+          if (route.name === 'tree') {
+            return (
+              <View style={[styles.treeBadge, focused && styles.treeBadgeActive]}>
+                <Ionicons name={focused ? 'leaf' : 'leaf-outline'} size={26} color={focused ? colors.white : colors.placeHolder} />
+              </View>
+            );
+          }
+
           let iconName;
 
           // HTML 테마에 부합하도록 정밀한 Ionicons 아이콘 세팅 매칭
@@ -80,6 +90,11 @@ const TabNavigator = () => {
         options={{ tabBarLabel: '추가' }}
       />
       <Tab.Screen
+        name="tree"
+        component={TreeScreen}
+        options={{ tabBarLabel: () => <View style={styles.treeLabelSpacer} /> }}
+      />
+      <Tab.Screen
         name="report"
         component={ReportScreen}
         options={{ tabBarLabel: '통계' }}
@@ -104,6 +119,21 @@ const styles = StyleSheet.create({
   },
   iconWrapperActive: {
     backgroundColor: colors.placeHolder, // 2차 리디자인에서 제공한 선택 메뉴 전용 소프트 캡슐 배경
+  },
+  treeBadge: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: colors.purple10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  treeBadgeActive: {
+    backgroundColor: colors.purple,
+  },
+  // 라벨이 있는 다른 탭들과 아이콘 높이를 맞추기 위한 투명 스페이서 (fontSize 12 + marginTop 4와 동일한 높이)
+  treeLabelSpacer: {
+    height: 16,
   },
 });
 

@@ -153,21 +153,13 @@ const ReportScreen = () => {
       .filter(cat => cat.amount > 0)
       .sort((a, b) => b.amount - a.amount);
 
-    let praiseMessage = "이번 달 소비를 기록 중이에요! ✨";
     const happyRatio = total > 0 ? (happyTotal / total) * 100 : 0;
-
-    if (total > 0) {
-      if (happyRatio >= 70) praiseMessage = "와우! 가치 있는 소비를 아주 잘하고 계시네요!";
-      else if (happyRatio >= 50) praiseMessage = "잘 산 지출이 50% 이상이네요! 나쁘지 않아요!";
-      else praiseMessage = "후회되는 지출이 많아요. 다음 달엔 더 신중해져 볼까요?";
-    }
 
     return {
       regretTotal,
       happyTotal,
       total,
       topReceipt,
-      praiseMessage,
       happyRatio,
       diffAmount: Math.abs(diff),
       isIncreased,
@@ -293,7 +285,7 @@ const ReportScreen = () => {
                     <Text style={{ color: stats.isIncreased ? colors.red : colors.green50, fontWeight: '700' }}>
                       {stats.diffAmount.toLocaleString()}원 {stats.isIncreased ? '더' : '덜'}
                     </Text>{' '}
-                    썼어요 {stats.isIncreased ? '📈' : '📉'}
+                    썼어요
                   </>
                 )}
               </Text>
@@ -310,10 +302,6 @@ const ReportScreen = () => {
                   <Text style={styles.emotionLabel}>후회</Text>
                   <Text style={styles.emotionValue}>{stats.regretTotal.toLocaleString()}원</Text>
                 </View>
-              </View>
-
-              <View style={styles.praiseBox}>
-                <Text style={styles.praiseText}>{stats.praiseMessage}</Text>
               </View>
             </View>
 

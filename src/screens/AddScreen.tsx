@@ -2,7 +2,7 @@ import firestore from '@react-native-firebase/firestore';
 import { db, storage_ref, auth_ref } from '../api/firebaseConfig';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -13,6 +13,8 @@ import {
   Alert,
   Platform,
   Modal,
+  Animated,
+  Easing,
   KeyboardAvoidingView,
   PermissionsAndroid
 } from 'react-native';
@@ -40,6 +42,8 @@ const AddScreen = () => {
   const insets = useSafeAreaInsets();
 
   const [isSheetVisible, setIsSheetVisible] = useState(false);
+  const overlayOpacity = useRef(new Animated.Value(0)).current;
+  const sheetTranslateY = useRef(new Animated.Value(320)).current;
   const [image, setImage] = useState<string | null>(null);
   const [amount, setAmount] = useState('');
   const [emotion, setEmotion] = useState<'happy' | 'neutral' | 'regret' | null>(null);
@@ -83,6 +87,37 @@ const AddScreen = () => {
 
   const pickImage = () => {
     setIsSheetVisible(true);
+  };
+
+  // 시트가 뜰 때: 어두운 배경은 이미 떠 있는 것처럼 빠르게 페이드인, 시트만 아래에서 슬라이드업.
+  useEffect(() => {
+    if (!isSheetVisible) return;
+    overlayOpacity.setValue(0);
+    sheetTranslateY.setValue(320);
+    Animated.parallel([
+      Animated.timing(overlayOpacity, { toValue: 1, duration: 200, useNativeDriver: true }),
+      Animated.timing(sheetTranslateY, {
+        toValue: 0,
+        duration: 260,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [isSheetVisible]);
+
+  const closeSheet = (after?: () => void) => {
+    Animated.parallel([
+      Animated.timing(overlayOpacity, { toValue: 0, duration: 180, useNativeDriver: true }),
+      Animated.timing(sheetTranslateY, {
+        toValue: 320,
+        duration: 220,
+        easing: Easing.in(Easing.cubic),
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setIsSheetVisible(false);
+      after?.();
+    });
   };
 
   const openCamera = async () => {
@@ -236,12 +271,12 @@ const AddScreen = () => {
 
         <ScrollView contentContainerStyle={[
           styles.scrollContent,
-          { paddingBottom: insets.bottom + 24 }
+          { paddingBottom: insets.bottom + 16 }
         ]}
                     keyboardShouldPersistTaps="handled"
                     showsVerticalScrollIndicator={false}>
           <Text style={styles.label}>
-            영수증 / 지출 사진<Text style={styles.required}>*</Text>
+            사진<Text style={styles.required}>*</Text>
           </Text>
 
           {/* 깔끔한 라운드 카드 형태의 프레임워크 */}
@@ -311,12 +346,12 @@ const AddScreen = () => {
             <EmotionButton type="happy"
                            label="잘 샀다"
                            selected={emotion === 'happy'}
-                           onPress={() => setEmotion('happy')} />
+                           onPress={() => { triggerNavHaptic(); setEmotion('happy'); }} />
             <View style={{ width: 12 }} />
             <EmotionButton type="regret"
                            label="후회"
                            selected={emotion === 'regret'}
-                           onPress={() => setEmotion('regret')} />
+                           onPress={() => { triggerNavHaptic(); setEmotion('regret'); }} />
           </View>
 
           <Text style={styles.label}>카테고리</Text>
@@ -330,7 +365,7 @@ const AddScreen = () => {
               return (
                 <TouchableOpacity
                   key={cat.key}
-                  onPress={() => setCategory(cat.key)}
+                  onPress={() => { triggerNavHaptic(); setCategory(cat.key); }}
                   activeOpacity={0.8}
                   style={[
                     styles.categoryChip,
@@ -382,30 +417,32 @@ const AddScreen = () => {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* 바텀 모달 시트 리디자인 */}
+      {/* 바텀 모달 시트 리디자인: 어두운 배경은 미리 떠 있는 것처럼 빠르게 페이드인되고, 시트만 아래에서 슬라이드업 */}
       <Modal
         visible={isSheetVisible}
         transparent={true}
-        animationType="slide"
-        onRequestClose={() => setIsSheetVisible(false)}
+        animationType="none"
+        onRequestClose={() => closeSheet()}
       >
-        <View style={styles.modalOverlay}>
+        <Animated.View style={[styles.modalOverlay, { opacity: overlayOpacity }]}>
           <TouchableOpacity
             style={StyleSheet.absoluteFill}
             activeOpacity={1}
-            onPress={() => setIsSheetVisible(false)}
+            onPress={() => closeSheet()}
           />
 
-          <View style={[styles.sheetContainer, { paddingBottom: insets.bottom + 16 }]}>
+          <Animated.View
+            style={[
+              styles.sheetContainer,
+              { paddingBottom: insets.bottom + 16, transform: [{ translateY: sheetTranslateY }] },
+            ]}
+          >
             <View style={styles.sheetHandle} />
             <Text style={styles.sheetTitle}>사진 가져오기</Text>
 
             <TouchableOpacity
               style={styles.sheetButton}
-              onPress={() => {
-                setIsSheetVisible(false);
-                setTimeout(() => openCamera(), 300);
-              }}
+              onPress={() => closeSheet(() => openCamera())}
             >
               <View style={[styles.sheetIconBox, { backgroundColor: colors.purple50 }]}>
                 <Ionicons name="camera" size={20} color={colors.purple} />
@@ -415,18 +452,15 @@ const AddScreen = () => {
 
             <TouchableOpacity
               style={styles.sheetButton}
-              onPress={() => {
-                setIsSheetVisible(false);
-                setTimeout(() => openLibrary(), 300);
-              }}
+              onPress={() => closeSheet(() => openLibrary())}
             >
               <View style={[styles.sheetIconBox, { backgroundColor: colors.o5 }]}>
                 <Ionicons name="images" size={20} color={colors.o40} />
               </View>
               <Text style={styles.sheetButtonText}>갤러리에서 선택</Text>
             </TouchableOpacity>
-          </View>
-        </View>
+          </Animated.View>
+        </Animated.View>
       </Modal>
     </SafeAreaView>
   );

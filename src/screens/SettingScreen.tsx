@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, TouchableOpacity, StyleSheet, Image, Alert, ScrollView, Animated, Switch } from 'react-native'
+import Constants from 'expo-constants';
 import { Text } from "../components/Text";
 import auth from '@react-native-firebase/auth';
 import { onGoogleButtonPress } from '../context/AuthContext';
@@ -200,7 +201,7 @@ const SettingsScreen = () => {
 
           <View style={styles.menuItem}>
             <Text style={styles.menuItemText}>현재 버전</Text>
-            <Text style={styles.versionText}>1.0.2</Text>
+            <Text style={styles.versionText}>{Constants.expoConfig?.version ?? '-'}</Text>
           </View>
 
           <View style={styles.menuDivider} />
@@ -220,6 +221,24 @@ const SettingsScreen = () => {
             <Text style={styles.menuItemText}>가족연결</Text>
             <Ionicons name="chevron-forward" size={16} color={colors.placeHolder} />
           </TouchableOpacity>
+
+          {__DEV__ && (
+            <>
+              <View style={styles.menuDivider} />
+
+              <TouchableOpacity
+                style={styles.menuItem}
+                onPress={() => {
+                  triggerNavHaptic();
+                  navigation.navigate('TreeStageDev');
+                }}
+                activeOpacity={0.6}
+              >
+                <Text style={styles.menuItemText}>[DEV] 나무 단계 미리보기</Text>
+                <Ionicons name="chevron-forward" size={16} color={colors.placeHolder} />
+              </TouchableOpacity>
+            </>
+          )}
 
           <View style={styles.menuDivider} />
 

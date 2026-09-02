@@ -13,7 +13,7 @@ import { getCategory } from "../constants/categories";
 import { triggerNavHaptic } from "../utils/haptics";
 
 const emotionColors: { [key: string]: { bg: string; text: string } } = {
-  happy: { bg: '#f1eefc', text: colors.purple },
+  happy: { bg: colors.purple50, text: colors.purple },
   regret: { bg: '#fff1f1', text: colors.red },
 };
 
@@ -132,7 +132,7 @@ const DetailScreen = ({ route, navigation }: any) => {
 
           <View style={styles.row}>
             <View style={styles.badgeGroup}>
-              <View style={[styles.emotionBadge, { backgroundColor: emotionColors[item.emotion]?.bg || '#f8f9fc' }]}>
+              <View style={[styles.emotionBadge, { backgroundColor: emotionColors[item.emotion]?.bg || colors.purple10 }]}>
                 <Text style={[styles.emotionBadgeText, { color: emotionColors[item.emotion]?.text || '#718096' }]}>
                   {item.emotion === 'happy' ? '잘 샀다' : '후회'}
                 </Text>
@@ -179,7 +179,7 @@ const DetailScreen = ({ route, navigation }: any) => {
               onPress={handleEditPress}
               activeOpacity={0.6}
             >
-              <View style={[styles.sheetIconBox, { backgroundColor: '#faf8ff' }]}>
+              <View style={[styles.sheetIconBox, { backgroundColor: colors.purple50 }]}>
                 <Ionicons name="pencil" size={18} color={colors.purple} />
               </View>
               <Text style={styles.sheetButtonText}>수정하기</Text>
@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     borderRadius: 24,
     overflow: 'hidden',
-    backgroundColor: '#f8f9fc',
+    backgroundColor: colors.purple10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.04,
@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 10,
-    backgroundColor: '#f8f9fc',
+    backgroundColor: colors.purple10,
     borderWidth: 1,
     borderColor: '#edf2f7',
   },
@@ -316,7 +316,7 @@ const styles = StyleSheet.create({
     marginBottom: 12
   },
   memoBox: {
-    backgroundColor: '#f8f9fc',
+    backgroundColor: colors.purple10,
     padding: 16,
     borderRadius: 16,
     borderWidth: 1,
