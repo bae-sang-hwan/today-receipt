@@ -1,5 +1,7 @@
-export const STAGE_LABELS = ['씨앗', '새싹', '어린나무', '나무', '만개', '풍성한 나무'];
+export const STAGE_LABELS = ['씨앗', '새싹', '어린나무', '나무', '풍성한 나무', '만개'];
 export const STAGE_THRESHOLDS = [0, 1, 3, 6, 10, 15];
+// 씨앗(연두) → 풍성한 나무(진한 초록) 순서의 성장 단계 색상
+export const STAGE_COLORS = ['#c8f5d9', '#9be8bc', '#6bd89e', '#3dbf82', '#1f9f68', '#059669'];
 
 export type FruitAnchor = { x: number; y: number; r: number };
 

@@ -1,4 +1,5 @@
 const { onDocumentCreated } = require('firebase-functions/v2/firestore');
+const { logger } = require('firebase-functions');
 const { initializeApp } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
 
@@ -16,18 +17,30 @@ exports.onReceiptCreated = onDocumentCreated('receipts/{receiptId}', async (even
 
   const receipt = snapshot.data();
   const authorUid = receipt.userId;
-  if (!authorUid) return;
+  if (!authorUid) {
+    logger.warn('receipt에 userId가 없어 종료', { receiptId: event.params.receiptId });
+    return;
+  }
 
   const userFamilySnap = await db.collection('userFamily').doc(authorUid).get();
   const familyId = userFamilySnap.exists ? userFamilySnap.data().familyId : null;
-  if (!familyId) return;
+  if (!familyId) {
+    logger.info('작성자가 가족에 속해있지 않아 종료', { authorUid });
+    return;
+  }
 
   const familySnap = await db.collection('families').doc(familyId).get();
-  if (!familySnap.exists) return;
+  if (!familySnap.exists) {
+    logger.warn('families 문서를 찾을 수 없음', { familyId });
+    return;
+  }
 
   const family = familySnap.data();
   const recipientUids = (family.memberIds || []).filter((uid) => uid !== authorUid);
-  if (recipientUids.length === 0) return;
+  if (recipientUids.length === 0) {
+    logger.info('본인 외 가족 구성원이 없어 종료', { familyId, authorUid });
+    return;
+  }
 
   const tokenSnaps = await Promise.all(
     recipientUids.map((uid) => db.collection('pushTokens').doc(uid).get())
@@ -36,7 +49,12 @@ exports.onReceiptCreated = onDocumentCreated('receipts/{receiptId}', async (even
     .filter((snap) => snap.exists && snap.data().token)
     .map((snap) => snap.data().token);
 
-  if (tokens.length === 0) return;
+  logger.info('푸시 대상 확인', { recipientUids, tokenCount: tokens.length });
+
+  if (tokens.length === 0) {
+    logger.info('등록된 푸시 토큰이 없어 종료', { recipientUids });
+    return;
+  }
 
   const authorName = family.members?.[authorUid]?.displayName || '가족';
   const amount = Number(receipt.amount || 0).toLocaleString();
@@ -50,7 +68,7 @@ exports.onReceiptCreated = onDocumentCreated('receipts/{receiptId}', async (even
     data: { type: 'family_receipt', receiptId: event.params.receiptId },
   }));
 
-  await fetch(EXPO_PUSH_ENDPOINT, {
+  const res = await fetch(EXPO_PUSH_ENDPOINT, {
     method: 'POST',
     headers: {
       Accept: 'application/json',
@@ -58,4 +76,11 @@ exports.onReceiptCreated = onDocumentCreated('receipts/{receiptId}', async (even
     },
     body: JSON.stringify(messages),
   });
+
+  const result = await res.json().catch(() => null);
+  if (!res.ok) {
+    logger.error('Expo 푸시 발송 요청 실패', { status: res.status, result });
+  } else {
+    logger.info('Expo 푸시 발송 응답', { result });
+  }
 });

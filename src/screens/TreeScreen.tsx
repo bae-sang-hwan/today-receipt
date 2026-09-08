@@ -14,6 +14,7 @@ import { HillBackground } from '../components/HillBackground';
 import { SkyBackground } from '../components/SkyBackground';
 import { CloudLayer } from '../components/CloudLayer';
 import { triggerNavHaptic } from '../utils/haptics';
+import { STAGE_LABELS, STAGE_THRESHOLDS, STAGE_COLORS, stageForTotal } from '../constants/tree';
 
 const TreeScreen = () => {
   const [selectedMonth, setSelectedMonth] = useState(LocalDate.now());
@@ -73,6 +74,10 @@ const TreeScreen = () => {
 
   const happy = receipts.filter((item) => item.emotion === 'happy').length;
   const regret = receipts.filter((item) => item.emotion === 'regret').length;
+  const total = happy + regret;
+  const stage = stageForTotal(total);
+  const isMaxStage = stage === STAGE_LABELS.length - 1;
+  const nextThreshold = STAGE_THRESHOLDS[stage + 1];
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -85,6 +90,33 @@ const TreeScreen = () => {
           {selectedMonth.format(DateTimeFormatter.ofPattern('yyyy년 MM월'))}
         </Text>
         <TouchableArrow direction="right" onPress={() => changeMonth(1)} />
+      </View>
+
+      <View style={styles.progressWrap}>
+        <View style={styles.progressLabelRow}>
+          <Text style={styles.progressCount}>
+            {isMaxStage ? `${total}개` : `${total} / ${nextThreshold}`}
+          </Text>
+        </View>
+        <View style={styles.progressSegments}>
+          {STAGE_LABELS.map((_, i) => (
+            <View
+              key={i}
+              style={[styles.progressSegment, i <= stage && { backgroundColor: STAGE_COLORS[i] }]}
+            />
+          ))}
+        </View>
+        <View style={styles.progressLabels}>
+          {STAGE_LABELS.map((label, i) => (
+            <Text
+              key={i}
+              style={[styles.progressSegmentLabel, i === stage && styles.progressSegmentLabelActive]}
+              numberOfLines={1}
+            >
+              {label}
+            </Text>
+          ))}
+        </View>
       </View>
 
       <PanGestureHandler onHandlerStateChange={onHandleMonth} activeOffsetX={[-10, 10]} failOffsetY={[-8, 8]}>
@@ -141,6 +173,44 @@ const styles = StyleSheet.create({
   },
   monthText: {
     fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.black,
+  },
+  progressWrap: {
+    paddingHorizontal: 24,
+    paddingBottom: 8,
+  },
+  progressLabelRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginBottom: 6,
+  },
+  progressCount: {
+    fontSize: 12,
+    color: colors.o40,
+  },
+  progressSegments: {
+    flexDirection: 'row',
+    height: 16,
+    borderRadius: 8,
+    overflow: 'hidden',
+    backgroundColor: colors.o5,
+  },
+  progressSegment: {
+    flex: 1,
+    height: '100%',
+  },
+  progressLabels: {
+    flexDirection: 'row',
+    marginTop: 4,
+  },
+  progressSegmentLabel: {
+    flex: 1,
+    fontSize: 10,
+    textAlign: 'center',
+    color: colors.o40,
+  },
+  progressSegmentLabelActive: {
     fontWeight: 'bold',
     color: colors.black,
   },

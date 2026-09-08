@@ -12,6 +12,7 @@ import TabNavigator from "./src/components/TabNavigator";
 import {SafeAreaProvider} from "react-native-safe-area-context";
 import {DateProvider} from "./src/context/DateContext";
 import DetailScreen from "./src/screens/DetailScreen";
+import AddScreen from "./src/screens/AddScreen";
 import {GestureHandlerRootView} from "react-native-gesture-handler";
 import ModifyScreen from "./src/screens/ModifyScreen";
 import SaveCompleteScreen from "./src/screens/SaveCompleteScreen";
@@ -132,6 +133,13 @@ export default function App() {
                         name="Root"
                         component={TabNavigator}
                         options={{ headerShown: false }}
+                      />
+
+                      {/* 2. 소비 기록 추가 (오른쪽 하단 플로팅 버튼에서 진입) */}
+                      <Stack.Screen
+                        name="Add"
+                        component={AddScreen}
+                        options={{ headerShown: false, presentation: 'modal' }}
                       />
 
                       {/* 2. 상세 페이지 */}
