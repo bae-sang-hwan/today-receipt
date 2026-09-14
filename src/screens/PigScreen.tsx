@@ -9,14 +9,17 @@ import auth from '@react-native-firebase/auth';
 import Svg, { Path } from 'react-native-svg';
 import { colors } from '../theme/colors';
 import { useFamily } from '../context/FamilyContext';
-import { GrowthTree } from '../components/GrowthTree';
+import { GrowthPig } from '../components/GrowthPig';
 import { HillBackground } from '../components/HillBackground';
 import { SkyBackground } from '../components/SkyBackground';
 import { CloudLayer } from '../components/CloudLayer';
 import { triggerNavHaptic } from '../utils/haptics';
-import { STAGE_LABELS, STAGE_THRESHOLDS, STAGE_COLORS, stageForTotal } from '../constants/tree';
+import { onSnapshotWithRetry } from '../utils/firestoreRetry';
+import { STAGE_LABELS, STAGE_THRESHOLDS, STAGE_COLORS, stageForTotal } from '../constants/pig';
 
-const TreeScreen = () => {
+const MAX_THRESHOLD = STAGE_THRESHOLDS[STAGE_THRESHOLDS.length - 1];
+
+const PigScreen = () => {
   const [selectedMonth, setSelectedMonth] = useState(LocalDate.now());
   const [receipts, setReceipts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,20 +57,23 @@ const TreeScreen = () => {
     const endStr = selectedMonth.withDayOfMonth(selectedMonth.lengthOfMonth()).toString();
     const memberIds = familyMemberIds.slice(0, 30); // Firestore in 쿼리 최대 30개
 
-    const unsubscribe = firestore()
-      .collection('receipts')
-      .where('userId', 'in', memberIds)
-      .where('dateString', '>=', startStr)
-      .where('dateString', '<=', endStr)
-      .orderBy('createdAt', 'desc')
-      .onSnapshot((querySnapshot) => {
+    const unsubscribe = onSnapshotWithRetry(
+      firestore()
+        .collection('receipts')
+        .where('userId', 'in', memberIds)
+        .where('dateString', '>=', startStr)
+        .where('dateString', '<=', endStr)
+        .orderBy('createdAt', 'desc'),
+      (querySnapshot) => {
         if (!querySnapshot) return;
-        setReceipts(querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+        setReceipts(querySnapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() })));
         setLoading(false);
-      }, (error) => {
-        console.error('나무 화면 리스너 에러:', error);
+      },
+      (error) => {
+        console.error('돼지 화면 리스너 에러:', error);
         setLoading(false);
-      });
+      }
+    );
 
     return () => unsubscribe();
   }, [selectedMonth, userId, JSON.stringify(familyMemberIds)]);
@@ -76,8 +82,6 @@ const TreeScreen = () => {
   const regret = receipts.filter((item) => item.emotion === 'regret').length;
   const total = happy + regret;
   const stage = stageForTotal(total);
-  const isMaxStage = stage === STAGE_LABELS.length - 1;
-  const nextThreshold = STAGE_THRESHOLDS[stage + 1];
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -94,9 +98,7 @@ const TreeScreen = () => {
 
       <View style={styles.progressWrap}>
         <View style={styles.progressLabelRow}>
-          <Text style={styles.progressCount}>
-            {isMaxStage ? `${total}개` : `${total} / ${nextThreshold}`}
-          </Text>
+          <Text style={styles.progressCount}>{total} / {MAX_THRESHOLD}</Text>
         </View>
         <View style={styles.progressSegments}>
           {STAGE_LABELS.map((_, i) => (
@@ -128,8 +130,8 @@ const TreeScreen = () => {
             {loading ? (
               <ActivityIndicator size="large" color={colors.purple} style={StyleSheet.absoluteFillObject} />
             ) : (
-              <View style={styles.treeCenter}>
-                <GrowthTree happy={happy} regret={regret} />
+              <View style={styles.pigCenter}>
+                <GrowthPig happy={happy} regret={regret} />
               </View>
             )}
           </View>
@@ -218,7 +220,7 @@ const styles = StyleSheet.create({
     flex: 1,
     position: 'relative',
   },
-  treeCenter: {
+  pigCenter: {
     ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
     justifyContent: 'flex-end',
@@ -233,4 +235,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default TreeScreen;
+export default PigScreen;

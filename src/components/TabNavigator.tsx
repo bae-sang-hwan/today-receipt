@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'; // 하단 �
 import HomeScreen from "../screens/HomeScreen";
 import ReportScreen from "../screens/ReportScreen";
 import SettingScreen from "../screens/SettingScreen";
-import TreeScreen from "../screens/TreeScreen";
+import PigScreen from "../screens/PigScreen";
 import { colors } from "../theme/colors";
 import { triggerNavHaptic } from "../utils/haptics";
 import { FloatingAddButton } from "./FloatingAddButton";
@@ -29,8 +29,8 @@ const TabNavigator = () => {
             // HTML 테마에 부합하도록 정밀한 Ionicons 아이콘 세팅 매칭
             if (route.name === 'home') {
               iconName = focused ? 'calendar' : 'calendar-outline';
-            } else if (route.name === 'tree') {
-              iconName = focused ? 'leaf' : 'leaf-outline';
+            } else if (route.name === 'pig') {
+              iconName = focused ? 'paw' : 'paw-outline';
             } else if (route.name === 'report') {
               iconName = focused ? 'stats-chart' : 'stats-chart-outline';
             } else if (route.name === 'setting') {
@@ -77,9 +77,9 @@ const TabNavigator = () => {
           options={{ tabBarLabel: '홈' }}
         />
         <Tab.Screen
-          name="tree"
-          component={TreeScreen}
-          options={{ tabBarLabel: '내 나무' }}
+          name="pig"
+          component={PigScreen}
+          options={{ tabBarLabel: '내 돼지' }}
         />
         <Tab.Screen
           name="report"

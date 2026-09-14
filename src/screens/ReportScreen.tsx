@@ -16,6 +16,7 @@ import {colors} from "../theme/colors";
 import { useFamily } from "../context/FamilyContext";
 import { CATEGORIES, getCategory } from "../constants/categories";
 import { triggerNavHaptic } from "../utils/haptics";
+import { onSnapshotWithRetry } from "../utils/firestoreRetry";
 
 const adUnitId = __DEV__ ? TestIds.BANNER : 'ca-app-pub-5927873314061819/2518464072';
 
@@ -90,24 +91,27 @@ const ReportScreen = () => {
 
     const memberIds = familyMemberIds.slice(0, 30); // Firestore in 쿼리 최대 30개
 
-    const unsubscribe = firestore()
-      .collection("receipts")
-      .where("userId", "in", memberIds)
-      .where("dateString", ">=", startStr)
-      .where("dateString", "<=", endStr)
-      .orderBy("createdAt", "desc")
-      .onSnapshot((querySnapshot) => {
+    const unsubscribe = onSnapshotWithRetry(
+      firestore()
+        .collection("receipts")
+        .where("userId", "in", memberIds)
+        .where("dateString", ">=", startStr)
+        .where("dateString", "<=", endStr)
+        .orderBy("createdAt", "desc"),
+      (querySnapshot) => {
         if (!querySnapshot) return;
-        const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const data = querySnapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
         setReceipts(data);
         setIsInitialLoading(false);
         setIsUpdating(false);
         setRandomItem(null);
-      }, (error) => {
+      },
+      (error) => {
         console.error("Firestore 리스너 에러:", error);
         setIsInitialLoading(false);
         setIsUpdating(false);
-      });
+      }
+    );
 
     firestore()
       .collection("receipts")

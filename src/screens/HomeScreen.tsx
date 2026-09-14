@@ -19,6 +19,7 @@ import {colors} from "../theme/colors";
 import { getCategory } from "../constants/categories";
 import { Ionicons } from '@expo/vector-icons';
 import { triggerNavHaptic } from "../utils/haptics";
+import { onSnapshotWithRetry } from "../utils/firestoreRetry";
 
 LocaleConfig.locales['fr'] = {
   monthNames: ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'],
@@ -77,16 +78,17 @@ const HomeScreen = () => {
       return;
     }
 
-    const unsubscribe = firestore()
-      .collection("receipts")
-      .where("userId", "in", familyMemberIds.slice(0, 30)) // Firestore in 쿼리 최대 30개
-      .orderBy("createdAt", "desc")
-      .onSnapshot((querySnapshot) => {
+    const unsubscribe = onSnapshotWithRetry(
+      firestore()
+        .collection("receipts")
+        .where("userId", "in", familyMemberIds.slice(0, 30)) // Firestore in 쿼리 최대 30개
+        .orderBy("createdAt", "desc"),
+      (querySnapshot) => {
         if (!querySnapshot) return;
         const marks: any = {};
         const allData: any[] = [];
 
-        querySnapshot.forEach((doc) => {
+        querySnapshot.forEach((doc: any) => {
           const data: any = { id: doc.id, ...doc.data() };
           allData.push(data);
 
@@ -99,9 +101,11 @@ const HomeScreen = () => {
 
         setReceipts(allData);
         setMarkedDates(marks);
-      }, (error) => {
+      },
+      (error) => {
         console.error("Firestore 리스너 에러:", error);
-      });
+      }
+    );
 
     return () => unsubscribe();
   }, [userId, JSON.stringify(familyMemberIds)]);

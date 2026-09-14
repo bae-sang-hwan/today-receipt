@@ -23,7 +23,7 @@ import { getReminderSettings, applyReminderSchedule } from "./src/api/notificati
 import { registerPushToken } from "./src/api/pushTokenService";
 import {FamilyProvider} from "./src/context/FamilyContext";
 import FamilyScreen from "./src/screens/FamilyScreen";
-import TreeStageDevScreen from "./src/screens/TreeStageDevScreen";
+import PigStageDevScreen from "./src/screens/PigStageDevScreen";
 import ForceUpdateScreen from "./src/screens/ForceUpdateScreen";
 import { checkForceUpdate, ForceUpdateInfo } from "./src/api/versionService";
 
@@ -173,8 +173,8 @@ export default function App() {
 
                       {__DEV__ && (
                         <Stack.Screen
-                          name="TreeStageDev"
-                          component={TreeStageDevScreen}
+                          name="PigStageDev"
+                          component={PigStageDevScreen}
                           options={{ headerShown: false }}
                         />
                       )}

@@ -230,11 +230,11 @@ const SettingsScreen = () => {
                 style={styles.menuItem}
                 onPress={() => {
                   triggerNavHaptic();
-                  navigation.navigate('TreeStageDev');
+                  navigation.navigate('PigStageDev');
                 }}
                 activeOpacity={0.6}
               >
-                <Text style={styles.menuItemText}>[DEV] 나무 단계 미리보기</Text>
+                <Text style={styles.menuItemText}>[DEV] 돼지 단계 미리보기</Text>
                 <Ionicons name="chevron-forward" size={16} color={colors.placeHolder} />
               </TouchableOpacity>
             </>
