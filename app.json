@@ -1,14 +1,14 @@
 {
   "expo": {
-    "name": "오늘의 영수증",
+    "name": "하루 OX 캘린더",
     "slug": "today-receipt",
-    "version": "1.1.1",
+    "version": "2.0.0",
     "orientation": "portrait",
-    "icon": "./assets/today-icon.png",
-    "userInterfaceStyle": "light",
+    "icon": "./assets/app-icon.png",
+    "userInterfaceStyle": "automatic",
     "notification": {
-      "icon": "./assets/today-icon.png",
-      "color": "#ffffff"
+      "icon": "./assets/notification-icon.png",
+      "color": "#2457D6"
     },
     "ios": {
       "supportsTablet": true,
@@ -18,17 +18,25 @@
       "googleServicesFile": "./google-services.json",
       "package": "com.hyeheee.todayreceipt",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/today-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/adaptive-foreground.png",
+        "monochromeImage": "./assets/adaptive-monochrome.png",
+        "backgroundColor": "#FFFFFF"
       },
       "permissions": [
-        "android.permission.RECORD_AUDIO",
-        "android.permission.SCHEDULE_EXACT_ALARM",
         "android.permission.POST_NOTIFICATIONS",
+        "com.google.android.gms.permission.AD_ID"
+      ],
+      "blockedPermissions": [
         "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
-        "com.google.android.gms.permission.AD_ID"
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO",
+        "android.permission.READ_MEDIA_VISUAL_USER_SELECTED",
+        "android.permission.SCHEDULE_EXACT_ALARM",
+        "android.permission.USE_EXACT_ALARM",
+        "android.permission.SYSTEM_ALERT_WINDOW"
       ]
     },
     "web": {
@@ -37,25 +45,34 @@
     "plugins": [
       "@react-native-firebase/app",
       "@react-native-firebase/auth",
-      "expo-font",
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/fonts/Pretendard-Regular.ttf",
+            "./assets/fonts/Pretendard-Medium.ttf",
+            "./assets/fonts/Pretendard-SemiBold.ttf",
+            "./assets/fonts/Pretendard-Bold.ttf",
+            "./assets/fonts/Pretendard-ExtraBold.ttf"
+          ]
+        }
+      ],
       [
         "expo-splash-screen",
         {
-          "image": "./assets/splash-blank.png",
-          "backgroundColor": "#caebe4"
+          "image": "./assets/splash-logo.png",
+          "imageWidth": 180,
+          "backgroundColor": "#FFFFFF",
+          "dark": {
+            "image": "./assets/splash-logo.png",
+            "backgroundColor": "#101418"
+          }
         }
       ],
       [
         "react-native-google-mobile-ads",
         {
           "androidAppId": "ca-app-pub-5927873314061819~3805449410"
-        }
-      ],
-      [
-        "expo-image-picker",
-        {
-          "photosPermission": "사용자가 사진을 선택할 수 있도록 앨범에 접근합니다.",
-          "cameraPermission": "사진을 촬영할 수 있도록 카메라에 접근합니다."
         }
       ],
       "@react-native-community/datetimepicker",
@@ -75,12 +92,63 @@
           }
         }
       ],
-      "@react-native-google-signin/google-signin"
+      "@react-native-google-signin/google-signin",
+      "expo-sqlite",
+      [
+        "react-native-android-widget",
+        {
+          "fonts": [
+            "./assets/fonts/Pretendard-Medium.ttf",
+            "./assets/fonts/Pretendard-Bold.ttf",
+            "./assets/fonts/Pretendard-ExtraBold.ttf"
+          ],
+          "widgets": [
+            {
+              "name": "TodayOX",
+              "label": "오늘 한 칸",
+              "description": "탭 한 번으로 오늘을 O, X로 기록해요",
+              "minWidth": "60dp",
+              "minHeight": "60dp",
+              "targetCellWidth": 1,
+              "targetCellHeight": 1,
+              "resizeMode": "none",
+              "widgetFeatures": "reconfigurable",
+              "updatePeriodMillis": 1800000
+            },
+            {
+              "name": "WeekOX",
+              "label": "이번 주",
+              "description": "이번 주 7일을 위젯에서 바로 기록해요",
+              "minWidth": "250dp",
+              "minHeight": "60dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 1,
+              "resizeMode": "horizontal|vertical",
+              "widgetFeatures": "reconfigurable",
+              "updatePeriodMillis": 1800000
+            },
+            {
+              "name": "MonthOX",
+              "label": "이번 달",
+              "description": "이번 달 달력에서 지난 날까지 바로 기록해요",
+              "minWidth": "180dp",
+              "minHeight": "180dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 4,
+              "resizeMode": "horizontal|vertical",
+              "widgetFeatures": "reconfigurable",
+              "updatePeriodMillis": 1800000
+            }
+          ]
+        }
+      ],
+      "expo-iap"
     ],
     "extra": {
       "eas": {
         "projectId": "cb553c3e-d067-46a9-8356-574a1a467fa4"
       }
-    }
+    },
+    "scheme": "haruox"
   }
 }
