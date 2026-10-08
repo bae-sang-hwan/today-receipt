@@ -184,17 +184,6 @@ export const getRecord = (calendarId: string, date: string): DayRecord | null =>
   return row ? toRecord(row) : null;
 };
 
-export const nextValue = (v: MarkValue): MarkValue => (v === '' ? 'O' : v === 'O' ? 'X' : '');
-
-// 빈칸 → O → X → 빈칸. 미래 날짜는 바꾸지 않는다. 바뀐 값을 돌려준다.
-export const cycleRecord = (calendarId: string, date: string): MarkValue | null => {
-  if (date > todayKey()) return null;
-  const cur = getRecord(calendarId, date);
-  const value = nextValue(cur?.value ?? '');
-  saveRecord(calendarId, date, value, cur?.memo ?? '');
-  return value;
-};
-
 // 동기화를 위해 빈칸도 행을 남긴다.
 export const saveRecord = (calendarId: string, date: string, value: MarkValue, memo: string) => {
   if (date > todayKey()) return;

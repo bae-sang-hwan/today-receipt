@@ -1,5 +1,5 @@
 import { getSetting, setSetting } from './repo';
-import type { WeekStart } from '../domain/date';
+import { todayKey, type WeekStart } from '../domain/date';
 
 export type ThemeSetting = 'system' | 'light' | 'dark';
 export type WidgetTheme = 'light' | 'dark';
@@ -35,6 +35,20 @@ export const getWidgetConfig = (widgetId: number): WidgetConfig | null => {
 };
 export const setWidgetConfig = (widgetId: number, config: WidgetConfig | null) =>
   setSetting(`widget:${widgetId}`, config ? JSON.stringify(config) : null);
+
+// 주/월 위젯에서 ◀ ▶로 넘긴 칸 수(0 = 이번 주/달, -1 = 지난 주/달). 날짜가 바뀌면 이번으로 돌아온다.
+export const getWidgetPage = (widgetId: number): number => {
+  const raw = getSetting(`widget_page:${widgetId}`);
+  if (!raw) return 0;
+  try {
+    const { offset, day } = JSON.parse(raw) as { offset: number; day: string };
+    return day === todayKey() && Number.isInteger(offset) ? offset : 0;
+  } catch {
+    return 0;
+  }
+};
+export const setWidgetPage = (widgetId: number, offset: number | null) =>
+  setSetting(`widget_page:${widgetId}`, offset ? JSON.stringify({ offset, day: todayKey() }) : null);
 
 // 동기화 상태
 export const getLastPull = () => Number(getSetting('sync_last_pull') ?? 0);

@@ -43,10 +43,10 @@ Notifications.setNotificationHandler({
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-// 위젯의 "haruox://calendar/{id}" 링크로 해당 캘린더를 연다.
+// 위젯의 "haruox://calendar/{id}" 링크로 해당 캘린더를 열고, 뒤에 날짜("YYYY-MM-DD" 또는 "today")가 있으면 기록 모달도 띄운다.
 const linking: LinkingOptions<RootStackParamList> = {
   prefixes: ['haruox://'],
-  config: { screens: { Main: 'calendar/:calendarId' } },
+  config: { screens: { Main: 'calendar/:calendarId/:date?' } },
 };
 
 const openCalendarFromNotification = (response: Notifications.NotificationResponse | null) => {

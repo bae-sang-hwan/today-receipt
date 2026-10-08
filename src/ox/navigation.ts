@@ -3,7 +3,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 export type RootStackParamList = {
   Onboarding: undefined;
-  Main: { calendarId?: string } | undefined;
+  Main: { calendarId?: string; date?: string } | undefined;
   CalendarManage: undefined;
   CalendarEdit: { id?: string } | undefined;
   Stats: { calendarId: string };

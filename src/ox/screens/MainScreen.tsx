@@ -5,11 +5,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { Tap, Txt, Mark } from '../components/ui';
 import { BannerSlot } from '../components/BannerSlot';
-import { DaySheet } from '../components/DaySheet';
+import { DayModal } from '../components/DayModal';
 import { useTheme, fonts } from '../theme';
 import { useDataVersion, useToday } from '../hooks';
 import { haptic } from '../haptics';
-import { cycleRecord, getRecordsInRange, getSetting, listCalendars, setSetting, type Calendar } from '../db/repo';
+import { getRecordsInRange, getSetting, listCalendars, setSetting, type Calendar } from '../db/repo';
 import { getLastCalendarId, getWeekStart, setLastCalendarId } from '../db/settings';
 import { addDays, dateKeyOf, daysInMonth, monthCells, parseDateKey, shiftMonth, weekdayLabels } from '../domain/date';
 import { currentStreak } from '../domain/stats';
@@ -32,7 +32,7 @@ export default function MainScreen({ navigation, route }: ScreenProps<'Main'>) {
     const d = parseDateKey(today);
     return { year: d.getFullYear(), month: d.getMonth() + 1 };
   });
-  const [sheetDate, setSheetDate] = useState<string | null>(null);
+  const [modalDate, setModalDate] = useState<string | null>(null);
   const [hintShown, setHintShown] = useState(() => getSetting('hint_tap') === '1');
 
   // 알림이나 위젯에서 특정 캘린더로 들어온 경우
@@ -44,6 +44,20 @@ export default function MainScreen({ navigation, route }: ScreenProps<'Main'>) {
     setYm({ year: d.getFullYear(), month: d.getMonth() + 1 });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [route.params?.calendarId]);
+
+  // 위젯에서 날짜를 눌러 들어온 경우: 그 달로 옮기고 기록 모달을 띄운다.
+  // 같은 날짜를 다시 눌러도 열리도록 처리한 뒤 파라미터를 비운다.
+  useEffect(() => {
+    const raw = route.params?.date;
+    if (!raw) return;
+    navigation.setParams({ date: undefined });
+    const key = raw === 'today' ? today : raw;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(key) || key > today) return;
+    const d = parseDateKey(key);
+    setYm({ year: d.getFullYear(), month: d.getMonth() + 1 });
+    setModalDate(key);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [route.params?.date]);
 
   useEffect(() => {
     if (calendar && calendar.id !== getLastCalendarId()) setLastCalendarId(calendar.id);
@@ -87,7 +101,7 @@ export default function MainScreen({ navigation, route }: ScreenProps<'Main'>) {
 
   const onTapDay = (key: string) => {
     if (key > today) return;
-    cycleRecord(calendar.id, key);
+    setModalDate(key);
     if (!hintShown) {
       setSetting('hint_tap', '1');
       setHintShown(true);
@@ -179,11 +193,8 @@ export default function MainScreen({ navigation, route }: ScreenProps<'Main'>) {
                 <Tap
                   key={key}
                   disabled={future}
-                  hapticStyle="mark"
                   pressedOpacity={0.75}
                   onPress={() => onTapDay(key)}
-                  onLongPress={() => setSheetDate(key)}
-                  delayLongPress={350}
                   accessibilityLabel={`${parseDateKey(key).getDate()}일 ${value === 'O' ? 'O' : value === 'X' ? 'X' : '기록 없음'}`}
                   style={[
                     styles.cell,
@@ -208,7 +219,7 @@ export default function MainScreen({ navigation, route }: ScreenProps<'Main'>) {
 
           {!hintShown && isCurrentMonth ? (
             <Txt style={{ textAlign: 'center', color: colors.muted, fontSize: 13, marginTop: 14 }}>
-              날짜를 누르면 O, 한 번 더 누르면 X. 길게 누르면 메모를 남길 수 있어요.
+              날짜를 눌러 O나 X를 기록하고 메모도 남겨 보세요.
             </Txt>
           ) : null}
 
@@ -229,7 +240,7 @@ export default function MainScreen({ navigation, route }: ScreenProps<'Main'>) {
 
       <BannerSlot />
 
-      <DaySheet calendar={calendar} date={sheetDate} onClose={() => setSheetDate(null)} />
+      <DayModal calendar={calendar} date={modalDate} onClose={() => setModalDate(null)} />
     </SafeAreaView>
   );
 }
