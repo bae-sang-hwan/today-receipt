@@ -3,6 +3,12 @@
     "name": "하루 OX 캘린더",
     "slug": "today-receipt",
     "version": "2.0.0",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/cb553c3e-d067-46a9-8356-574a1a467fa4"
+    },
     "orientation": "portrait",
     "icon": "./assets/app-icon.png",
     "userInterfaceStyle": "automatic",
