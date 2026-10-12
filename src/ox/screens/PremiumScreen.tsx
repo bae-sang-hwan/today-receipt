@@ -14,6 +14,7 @@ const BENEFITS: { icon: keyof typeof Ionicons.glyphMap; title: string; sub: stri
   { icon: 'close-circle-outline', title: '광고 제거', sub: '앱의 모든 화면에서' },
   { icon: 'infinite-outline', title: '캘린더 무제한', sub: `무료는 ${FREE_CALENDAR_LIMIT}개까지` },
   { icon: 'contrast-outline', title: '위젯 어두운 테마', sub: '홈 화면에 어울리게' },
+  { icon: 'grid-outline', title: '1년 히트맵 · 요일별 통계', sub: '내 습관을 한눈에' },
 ];
 
 // S08 프리미엄: 비소모성 인앱 상품 하나. 구독 아님.
