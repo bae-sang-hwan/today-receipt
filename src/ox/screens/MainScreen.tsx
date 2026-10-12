@@ -228,7 +228,7 @@ export default function MainScreen({ navigation, route }: ScreenProps<'Main'>) {
                   {rec?.memo ? <View style={[styles.memoDot, { backgroundColor: colors.muted }]} /> : null}
                   {/* 칸을 거의 채우되, 왼쪽 위 날짜 숫자와 겹치지 않게 조금 아래로 내린다. */}
                   <View style={{ marginTop: 6 }}>
-                    <Mark value={value} markStyle={calendar.markStyle} size={cellSize * 0.85} />
+                    <Mark value={value} markStyle={calendar.markStyle} size={cellSize * 0.75} />
                   </View>
                 </Tap>
               );

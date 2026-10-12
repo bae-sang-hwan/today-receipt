@@ -13,14 +13,15 @@ export type WidgetName = (typeof WIDGET_NAMES)[number];
 const palette = {
   light: {
     bg: '#FFFFFF' as HexColor, ink: '#16202B' as HexColor, muted: '#5F6B7A' as HexColor, line: '#E2E6EC' as HexColor,
-    cell: '#EEF0F4' as HexColor, o: '#2457D6' as HexColor, oSoft: '#E3EBFC' as HexColor, x: '#D23F36' as HexColor, xSoft: '#FBE6E4' as HexColor,
+    cell: '#EEF0F4' as HexColor, cellOff: '#F8F9FB' as HexColor, faint: '#A3ACB8' as HexColor, o: '#2457D6' as HexColor, oSoft: '#E3EBFC' as HexColor, x: '#D23F36' as HexColor, xSoft: '#FBE6E4' as HexColor,
   },
   dark: {
     bg: '#181E25' as HexColor, ink: '#E7EBF0' as HexColor, muted: '#98A3B0' as HexColor, line: '#29313B' as HexColor,
-    cell: '#1F262F' as HexColor, o: '#7AA2FF' as HexColor, oSoft: '#1D2C4D' as HexColor, x: '#FF7A70' as HexColor, xSoft: '#46201E' as HexColor,
+    cell: '#1F262F' as HexColor, cellOff: '#1B2129' as HexColor, faint: '#5C6774' as HexColor, o: '#7AA2FF' as HexColor, oSoft: '#1D2C4D' as HexColor, x: '#FF7A70' as HexColor, xSoft: '#46201E' as HexColor,
   },
 };
 
+// cellOff: 앱 달력이 미래 날짜를 흐리게(40%) 그린 것과 같은 색. 위젯 배경 위에 cell을 40%로 겹친 값이다.
 const appUri = (calendarId?: string) => (calendarId ? `haruox://calendar/${calendarId}` : 'haruox://');
 // 앱을 열고 그 날짜의 기록 모달을 띄운다. "today"는 앱이 연 순간의 날짜로 바꾼다.
 const dayUri = (calendarId: string, date: string) => `haruox://calendar/${calendarId}/${date}`;
@@ -59,7 +60,8 @@ const FillMark = ({ value, calendar, theme, maxSize = 72 }: { value: DayRecord['
     text={markSymbol(value, calendar.markStyle)}
     maxLines={1}
     style={{
-      width: 'match_parent', height: 'match_parent', textAlign: 'center', adjustsFontSizeToFit: true,
+      // 안쪽 여백만큼 칸보다 조금 작게 맞춘다.
+      width: 'match_parent', height: 'match_parent', padding: 3, textAlign: 'center', adjustsFontSizeToFit: true,
       fontSize: maxSize, color: markColors(value, theme).fg, fontFamily: 'Pretendard-ExtraBold',
     }}
   />
@@ -157,8 +159,8 @@ export const WeekWidget = ({ calendar, theme, page }: { calendar: Calendar | nul
               clickAction={future ? undefined : 'OPEN_URI'}
               clickActionData={future ? undefined : { uri: dayUri(calendar.id, key) }}
               style={{
-                // 누를 수 없는 미래 날짜는 회색, 나머지는 흰색
-                flex: 1, width: 0, height: 'match_parent', borderRadius: 9, backgroundColor: future ? c.cell : c.bg,
+                // 앱 달력과 같게: 기록한 날은 O/X 색, 기록할 수 있는 날은 회색, 미래 날짜는 연한 회색
+                flex: 1, width: 0, height: 'match_parent', borderRadius: 9, backgroundColor: future ? c.cellOff : markColors(value, theme).bg,
                 alignItems: 'center', justifyContent: 'center',
                 ...(isToday ? { borderWidth: 2, borderColor: c.ink } : {}),
               }}
@@ -167,7 +169,7 @@ export const WeekWidget = ({ calendar, theme, page }: { calendar: Calendar | nul
                 text={formatShortDate(key)}
                 maxLines={1}
                 // 칸이 좁은 기기에서는 "10/14 화"가 한 줄에 들어가도록 글자를 줄인다.
-                style={{ fontSize: 9, color: dow === 0 ? c.x : c.muted, fontFamily: 'Pretendard-Medium', adjustsFontSizeToFit: true }}
+                style={{ fontSize: 9, color: future ? c.faint : dow === 0 ? c.x : c.muted, fontFamily: 'Pretendard-Medium', adjustsFontSizeToFit: true }}
               />
               <FlexWidget style={{ width: 'match_parent', flex: 1, height: 0 }}>
                 {value !== '' ? <FillMark value={value} calendar={calendar} theme={theme} /> : null}
@@ -210,16 +212,17 @@ export const MonthWidget = ({ calendar, theme, page }: { calendar: Calendar | nu
             if (!key) return <FlexWidget key={`e${ri}-${ci}`} style={{ flex: 1, width: 0, height: 'match_parent' }} />;
             const value = records[key]?.value ?? '';
             const future = key > today;
-            // 배경: 누를 수 없는 미래 날짜는 회색, 나머지는 흰색. 날짜 글자: 평일 검정, 토요일 회색, 일요일 빨강
+            // 배경은 앱 달력과 같게: 기록한 날은 O/X 색, 기록할 수 있는 날은 회색, 미래 날짜는 연한 회색.
+            // 날짜 글자: 평일 검정, 토요일 회색, 일요일 빨강(미래 날짜는 흐리게)
             const dow = parseDateKey(key).getDay();
-            const dayColor = dow === 0 ? c.x : dow === 6 ? c.muted : c.ink;
+            const dayColor = future ? c.faint : dow === 0 ? c.x : dow === 6 ? c.muted : c.ink;
             return (
               <FlexWidget
                 key={key}
                 clickAction={future ? undefined : 'OPEN_URI'}
                 clickActionData={future ? undefined : { uri: dayUri(calendar.id, key) }}
                 style={{
-                  flex: 1, width: 0, height: 'match_parent', borderRadius: 6, backgroundColor: future ? c.cell : c.bg, padding: 2,
+                  flex: 1, width: 0, height: 'match_parent', borderRadius: 6, backgroundColor: future ? c.cellOff : markColors(value, theme).bg, padding: 2,
                   ...(key === today ? { borderWidth: 1.5, borderColor: c.ink } : {}),
                 }}
               >
