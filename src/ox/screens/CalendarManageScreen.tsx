@@ -1,9 +1,11 @@
 import React, { useMemo } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Animated, ScrollView, StyleSheet, View } from 'react-native';
+import { GestureDetector } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Card, Header, Row, Tap, Txt } from '../components/ui';
 import { BannerSlot } from '../components/BannerSlot';
+import { useDragReorder } from '../components/reorder';
 import { useTheme } from '../theme';
 import { useDataVersion, usePremium, useToday } from '../hooks';
 import { getRecordsInRange, listCalendars, reorderCalendars, getAllRecords } from '../db/repo';
@@ -18,14 +20,14 @@ export default function CalendarManageScreen({ navigation }: ScreenProps<'Calend
   const version = useDataVersion();
   const today = useToday();
   const premium = usePremium();
-  const calendars = useMemo(() => listCalendars(), [version]);
+  const saved = useMemo(() => listCalendars(), [version]);
 
   const summaries = useMemo(() => {
     const d = parseDateKey(today);
     const y = d.getFullYear();
     const m = d.getMonth() + 1;
     return Object.fromEntries(
-      calendars.map((c) => {
+      saved.map((c) => {
         const all = getAllRecords(c.id);
         const month = getRecordsInRange(c.id, dateKeyOf(y, m, 1), dateKeyOf(y, m, daysInMonth(y, m)));
         const rate = monthRate(y, m, month, startKeyOf(c.createdAt, all), today);
@@ -33,15 +35,10 @@ export default function CalendarManageScreen({ navigation }: ScreenProps<'Calend
         return [c.id, `이번 달 ${rate ?? 0}% · 연속 ${streak}일`];
       }),
     );
-  }, [calendars, today]);
+  }, [saved, today]);
 
-  const move = (index: number, delta: number) => {
-    const ids = calendars.map((c) => c.id);
-    const target = index + delta;
-    if (target < 0 || target >= ids.length) return;
-    [ids[index], ids[target]] = [ids[target], ids[index]];
-    reorderCalendars(ids);
-  };
+  // 꾹 눌러서 끌어 순서 바꾸기
+  const { list: calendars, bind, move } = useDragReorder({ items: saved, axis: 'y', onReorder: reorderCalendars });
 
   const add = () => {
     if (!premium && calendars.length >= FREE_CALENDAR_LIMIT) navigation.navigate('Premium');
@@ -53,34 +50,36 @@ export default function CalendarManageScreen({ navigation }: ScreenProps<'Calend
       <Header title="캘린더 관리" onBack={navigation.goBack} />
       <ScrollView contentContainerStyle={styles.body}>
         <Card>
-          {calendars.map((c, i) => (
-            <Row
-              key={c.id}
-              title={c.name}
-              sub={summaries[c.id]}
-              last={i === calendars.length - 1}
-              onPress={() => navigation.navigate('CalendarEdit', { id: c.id })}
-              chevron={false}
-              left={<View style={[styles.dot, { backgroundColor: c.color }]} />}
-              right={
-                <View style={styles.order}>
-                  <Tap onPress={() => move(i, -1)} disabled={i === 0} hitSlop={6} accessibilityLabel={`${c.name} 위로`} style={{ opacity: i === 0 ? 0.25 : 1 }}>
-                    <Ionicons name="chevron-up" size={20} color={colors.muted} />
-                  </Tap>
-                  <Tap
-                    onPress={() => move(i, 1)}
-                    disabled={i === calendars.length - 1}
-                    hitSlop={6}
-                    accessibilityLabel={`${c.name} 아래로`}
-                    style={{ opacity: i === calendars.length - 1 ? 0.25 : 1 }}
-                  >
-                    <Ionicons name="chevron-down" size={20} color={colors.muted} />
-                  </Tap>
-                </View>
-              }
-            />
-          ))}
+          {calendars.map((c, i) => {
+            const drag = bind(i);
+            return (
+              <GestureDetector key={c.id} gesture={drag.gesture}>
+                <Animated.View
+                  onLayout={drag.onLayout}
+                  accessibilityActions={[
+                    { name: 'moveUp', label: '위로 이동' },
+                    { name: 'moveDown', label: '아래로 이동' },
+                  ]}
+                  onAccessibilityAction={(e) => move(i, e.nativeEvent.actionName === 'moveUp' ? -1 : 1)}
+                  style={[{ transform: drag.transform }, drag.dragging && [styles.dragging, { backgroundColor: colors.surface }]]}
+                >
+                  <Row
+                    title={c.name}
+                    sub={summaries[c.id]}
+                    last={i === calendars.length - 1}
+                    onPress={() => navigation.navigate('CalendarEdit', { id: c.id })}
+                    chevron={false}
+                    left={<View style={[styles.dot, { backgroundColor: c.color }]} />}
+                    right={<Ionicons name="reorder-three" size={22} color={colors.muted} />}
+                  />
+                </Animated.View>
+              </GestureDetector>
+            );
+          })}
         </Card>
+        {calendars.length > 1 ? (
+          <Txt style={{ color: colors.muted, fontSize: 12.5, textAlign: 'center' }}>꾹 눌러서 끌면 순서를 바꿀 수 있어요.</Txt>
+        ) : null}
 
         <Tap onPress={add} style={[styles.add, { borderColor: colors.line }]}>
           <Ionicons name="add" size={20} color={colors.muted} />
@@ -105,7 +104,7 @@ export default function CalendarManageScreen({ navigation }: ScreenProps<'Calend
 const styles = StyleSheet.create({
   body: { padding: 16, gap: 12 },
   dot: { width: 12, height: 12, borderRadius: 6 },
-  order: { flexDirection: 'row', gap: 10 },
+  dragging: { zIndex: 1, elevation: 6, opacity: 0.95 },
   add: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6, borderWidth: 1.5, borderStyle: 'dashed', borderRadius: 14, paddingVertical: 15 },
   note: { borderWidth: 1, borderStyle: 'dashed', borderRadius: 12, padding: 14 },
 });

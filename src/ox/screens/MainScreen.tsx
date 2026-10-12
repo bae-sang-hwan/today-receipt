@@ -1,15 +1,16 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Animated, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { Tap, Txt, Mark } from '../components/ui';
 import { BannerSlot } from '../components/BannerSlot';
 import { DayModal } from '../components/DayModal';
+import { useDragReorder } from '../components/reorder';
 import { useTheme, fonts } from '../theme';
 import { useDataVersion, useToday } from '../hooks';
 import { haptic } from '../haptics';
-import { getRecordsInRange, getSetting, listCalendars, setSetting, type Calendar } from '../db/repo';
+import { getRecordsInRange, getSetting, listCalendars, reorderCalendars, setSetting, type Calendar } from '../db/repo';
 import { getLastCalendarId, getWeekStart, setLastCalendarId } from '../db/settings';
 import { addDays, dateKeyOf, daysInMonth, monthCells, parseDateKey, shiftMonth, weekdayLabels } from '../domain/date';
 import { currentStreak } from '../domain/stats';
@@ -17,6 +18,7 @@ import type { ScreenProps } from '../navigation';
 
 const H_PAD = 16;
 const GAP = 5;
+const CHIP_GAP = 6;
 
 export default function MainScreen({ navigation, route }: ScreenProps<'Main'>) {
   const { colors } = useTheme();
@@ -27,6 +29,8 @@ export default function MainScreen({ navigation, route }: ScreenProps<'Main'>) {
   const calendars = useMemo(() => listCalendars(), [version]);
   const [selectedId, setSelectedId] = useState<string | null>(() => route.params?.calendarId ?? getLastCalendarId());
   const calendar: Calendar | undefined = calendars.find((c) => c.id === selectedId) ?? calendars[0];
+  // 상단 태그도 꾹 눌러서 끌면 순서가 바뀐다(캘린더 관리와 같은 순서).
+  const chips = useDragReorder({ items: calendars, axis: 'x', gap: CHIP_GAP, onReorder: reorderCalendars });
 
   const [ym, setYm] = useState(() => {
     const d = parseDateKey(today);
@@ -128,20 +132,33 @@ export default function MainScreen({ navigation, route }: ScreenProps<'Main'>) {
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={['top', 'bottom']}>
       <View style={styles.topbar}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips} style={{ flex: 1 }}>
-          {calendars.map((c) => {
+          {chips.list.map((c, i) => {
             const on = c.id === calendar.id;
+            const drag = chips.bind(i);
             return (
-              <Tap
-                key={c.id}
-                onPress={() => setSelectedId(c.id)}
-                style={[styles.chip, { backgroundColor: on ? colors.ink : colors.cell }]}
-                accessibilityLabel={`${c.name} 캘린더`}
-              >
-                <View style={[styles.chipDot, { backgroundColor: c.color }]} />
-                <Txt weight={on ? 'bold' : 'medium'} style={{ fontSize: 14, color: on ? colors.inverseText : colors.muted }}>
-                  {c.name}
-                </Txt>
-              </Tap>
+              <GestureDetector key={c.id} gesture={drag.gesture}>
+                <Animated.View
+                  onLayout={drag.onLayout}
+                  accessibilityActions={[
+                    { name: 'moveLeft', label: '앞으로 이동' },
+                    { name: 'moveRight', label: '뒤로 이동' },
+                  ]}
+                  onAccessibilityAction={(e) => chips.move(i, e.nativeEvent.actionName === 'moveLeft' ? -1 : 1)}
+                  // 끄는 태그는 살짝 키워서 들려 있는 걸 보여 준다.
+                  style={{ transform: drag.dragging ? [...drag.transform, { scale: 1.08 }] : drag.transform, zIndex: drag.dragging ? 1 : 0 }}
+                >
+                  <Tap
+                    onPress={() => setSelectedId(c.id)}
+                    style={[styles.chip, { backgroundColor: on ? colors.ink : colors.cell }]}
+                    accessibilityLabel={`${c.name} 캘린더`}
+                  >
+                    <View style={[styles.chipDot, { backgroundColor: c.color }]} />
+                    <Txt weight={on ? 'bold' : 'medium'} style={{ fontSize: 14, color: on ? colors.inverseText : colors.muted }}>
+                      {c.name}
+                    </Txt>
+                  </Tap>
+                </Animated.View>
+              </GestureDetector>
             );
           })}
           <Tap onPress={() => navigation.navigate('CalendarManage')} style={[styles.chip, { backgroundColor: colors.cell }]} accessibilityLabel="캘린더 관리">
@@ -248,7 +265,7 @@ export default function MainScreen({ navigation, route }: ScreenProps<'Main'>) {
 
 const styles = StyleSheet.create({
   topbar: { flexDirection: 'row', alignItems: 'center', paddingLeft: H_PAD, paddingRight: H_PAD, paddingTop: 8, gap: 10 },
-  chips: { gap: 6, paddingRight: 8, alignItems: 'center' },
+  chips: { gap: CHIP_GAP, paddingRight: 8, alignItems: 'center' },
   chip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, height: 34, borderRadius: 17 },
   chipDot: { width: 8, height: 8, borderRadius: 4 },
   icons: { flexDirection: 'row', gap: 16 },
