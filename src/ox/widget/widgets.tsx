@@ -1,5 +1,5 @@
 import React from 'react';
-import { FlexWidget, TextWidget } from 'react-native-android-widget';
+import { FlexWidget, OverlapWidget, TextWidget } from 'react-native-android-widget';
 import type { HexColor } from 'react-native-android-widget';
 import { getCalendar, getRecordsInRange, listCalendars, type Calendar, type DayRecord } from '../db/repo';
 import { getWeekStart, getWidgetConfig, getWidgetPage, isPremium, type WidgetTheme } from '../db/settings';
@@ -53,6 +53,18 @@ const markColors = (value: DayRecord['value'], theme: WidgetTheme) => {
   return { bg: c.cell, fg: c.muted };
 };
 
+// 칸 크기는 기기·위젯 크기마다 달라서 글자 크기를 정해 두지 않고, 칸을 꽉 채운 뒤 넘치지 않을 만큼 자동으로 키운다.
+const FillMark = ({ value, calendar, theme, maxSize = 72 }: { value: DayRecord['value']; calendar: Calendar; theme: WidgetTheme; maxSize?: number }) => (
+  <TextWidget
+    text={markSymbol(value, calendar.markStyle)}
+    maxLines={1}
+    style={{
+      width: 'match_parent', height: 'match_parent', textAlign: 'center', adjustsFontSizeToFit: true,
+      fontSize: maxSize, color: markColors(value, theme).fg, fontFamily: 'Pretendard-ExtraBold',
+    }}
+  />
+);
+
 export const TodayWidget = ({ calendar, theme }: { calendar: Calendar | null; theme: WidgetTheme }) => {
   if (!calendar) return <EmptyWidget theme={theme} />;
   const c = palette[theme];
@@ -74,7 +86,11 @@ export const TodayWidget = ({ calendar, theme }: { calendar: Calendar | null; th
           ...(value === '' ? { borderWidth: 1.5, borderColor: c.line, borderStyle: 'dashed' as const } : {}),
         }}
       >
-        <TextWidget text={value === '' ? '탭' : markSymbol(value, calendar.markStyle)} style={{ fontSize: value === '' ? 11 : 26, color: mc.fg, fontFamily: value === '' ? 'Pretendard-Medium' : 'Pretendard-ExtraBold' }} />
+        {value === '' ? (
+          <TextWidget text="탭" style={{ fontSize: 11, color: mc.fg, fontFamily: 'Pretendard-Medium' }} />
+        ) : (
+          <FillMark value={value} calendar={calendar} theme={theme} maxSize={44} />
+        )}
       </FlexWidget>
       <TextWidget text={formatShortDate(today)} style={{ fontSize: 10, color: c.muted, fontFamily: 'Pretendard-Medium' }} />
     </FlexWidget>
@@ -132,7 +148,6 @@ export const WeekWidget = ({ calendar, theme, page }: { calendar: Calendar | nul
       <FlexWidget style={{ width: 'match_parent', flex: 1, flexDirection: 'row', flexGap: 4 }}>
         {days.map((key) => {
           const value = records[key]?.value ?? '';
-          const mc = markColors(value, theme);
           const future = key > today;
           const isToday = key === today;
           const dow = parseDateKey(key).getDay();
@@ -154,9 +169,9 @@ export const WeekWidget = ({ calendar, theme, page }: { calendar: Calendar | nul
                 // 칸이 좁은 기기에서는 "10/14 화"가 한 줄에 들어가도록 글자를 줄인다.
                 style={{ fontSize: 9, color: dow === 0 ? c.x : c.muted, fontFamily: 'Pretendard-Medium', adjustsFontSizeToFit: true }}
               />
-              {value !== '' ? (
-                <TextWidget text={markSymbol(value, calendar.markStyle)} style={{ fontSize: 17, color: mc.fg, fontFamily: 'Pretendard-ExtraBold' }} />
-              ) : null}
+              <FlexWidget style={{ width: 'match_parent', flex: 1, height: 0 }}>
+                {value !== '' ? <FillMark value={value} calendar={calendar} theme={theme} /> : null}
+              </FlexWidget>
             </FlexWidget>
           );
         })}
@@ -194,7 +209,6 @@ export const MonthWidget = ({ calendar, theme, page }: { calendar: Calendar | nu
           {row.map((key, ci) => {
             if (!key) return <FlexWidget key={`e${ri}-${ci}`} style={{ flex: 1, width: 0, height: 'match_parent' }} />;
             const value = records[key]?.value ?? '';
-            const mc = markColors(value, theme);
             const future = key > today;
             // 배경: 누를 수 없는 미래 날짜는 회색, 나머지는 흰색. 날짜 글자: 평일 검정, 토요일 회색, 일요일 빨강
             const dow = parseDateKey(key).getDay();
@@ -209,14 +223,13 @@ export const MonthWidget = ({ calendar, theme, page }: { calendar: Calendar | nu
                   ...(key === today ? { borderWidth: 1.5, borderColor: c.ink } : {}),
                 }}
               >
-                <FlexWidget style={{ width: 'match_parent', alignItems: 'flex-end' }}>
-                  <TextWidget text={`${parseDateKey(key).getDate()}일`} style={{ fontSize: 7, color: dayColor, fontFamily: 'Pretendard-Medium' }} />
-                </FlexWidget>
-                <FlexWidget style={{ width: 'match_parent', flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-                  {value !== '' ? (
-                    <TextWidget text={markSymbol(value, calendar.markStyle)} style={{ fontSize: 18, color: mc.fg, fontFamily: 'Pretendard-ExtraBold' }} />
-                  ) : null}
-                </FlexWidget>
+                {/* 날짜 글자는 오른쪽 위 구석에 겹쳐 두고, O/X는 칸 전체를 쓴다. */}
+                <OverlapWidget style={{ width: 'match_parent', height: 'match_parent' }}>
+                  {value !== '' ? <FillMark value={value} calendar={calendar} theme={theme} /> : null}
+                  <FlexWidget style={{ width: 'match_parent', alignItems: 'flex-end' }}>
+                    <TextWidget text={`${parseDateKey(key).getDate()}일`} style={{ fontSize: 7, color: dayColor, fontFamily: 'Pretendard-Medium' }} />
+                  </FlexWidget>
+                </OverlapWidget>
               </FlexWidget>
             );
           })}
