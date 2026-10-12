@@ -1,10 +1,11 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { useIAP, type Purchase } from 'expo-iap';
+import { getAvailablePurchases, useIAP, type Purchase } from 'expo-iap';
 import { PREMIUM_FALLBACK_PRICE, PREMIUM_SKU } from '../config';
 import { setPremium } from '../db/settings';
 import { haptic } from '../haptics';
 
 // 비소모성 인앱 상품 하나(평생 프리미엄). 구매 여부는 기기에 저장하고, 앱을 켤 때 Play 구매 내역으로 다시 확인한다.
+// 환불·취소되면 Play 구매 내역에서 빠지므로 그때 프리미엄을 끈다.
 
 interface PremiumApi {
   price: string;
@@ -52,18 +53,19 @@ export const PremiumProvider = ({ children }: { children: React.ReactNode }) => 
   });
   finishRef.current = iap.finishTransaction;
 
-  const { connected, fetchProducts, getAvailablePurchases } = iap;
+  const { connected, fetchProducts } = iap;
+
+  // 조회에 성공했을 때만 반영한다. 실패하면 throw하므로 기존 상태를 그대로 둔다.
+  // 재설치나 기기 변경 후에도 같은 Google 계정이면 다시 켜지고, 환불되면 꺼진다.
+  const sync = useCallback(async () => {
+    setPremium(owns(await getAvailablePurchases()));
+  }, []);
 
   useEffect(() => {
     if (!connected) return;
     fetchProducts({ skus: [PREMIUM_SKU], type: 'in-app' }).catch(() => {});
-    getAvailablePurchases().catch(() => {});
-  }, [connected, fetchProducts, getAvailablePurchases]);
-
-  // 재설치나 기기 변경 후에도 같은 Google 계정이면 자동으로 다시 활성화한다.
-  useEffect(() => {
-    if (owns(iap.availablePurchases)) setPremium(true);
-  }, [iap.availablePurchases]);
+    sync().catch(() => {});
+  }, [connected, fetchProducts, sync]);
 
   const purchase = useCallback(async () => {
     setLastError(null);
@@ -83,13 +85,13 @@ export const PremiumProvider = ({ children }: { children: React.ReactNode }) => 
   const restore = useCallback(async () => {
     setLastError(null);
     try {
-      await getAvailablePurchases();
+      await sync();
     } catch {
       setLastError('구매 내역을 불러오지 못했어요. 인터넷 연결을 확인해 주세요.');
       return false;
     }
     return true;
-  }, [getAvailablePurchases]);
+  }, [sync]);
 
   const product = iap.products.find((p) => p.id === PREMIUM_SKU);
 
