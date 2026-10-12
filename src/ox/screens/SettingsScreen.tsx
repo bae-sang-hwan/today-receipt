@@ -3,11 +3,11 @@ import { Linking, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Constants from 'expo-constants';
 import auth from '@react-native-firebase/auth';
-import { Card, Header, OptionSheet, Row, Tap, Txt } from '../components/ui';
+import { Card, Header, OptionSheet, Row, Tap, Toggle, Txt } from '../components/ui';
 import { useTheme } from '../theme';
 import { useDataVersion, usePremium } from '../hooks';
 import { listCalendars } from '../db/repo';
-import { getThemeSetting, getWeekStart, setThemeSetting, setWeekStart, type ThemeSetting } from '../db/settings';
+import { getThemeSetting, getWeekStart, isDevPremium, setDevPremium, setThemeSetting, setWeekStart, type ThemeSetting } from '../db/settings';
 import type { WeekStart } from '../domain/date';
 import { CONTACT_EMAIL, PRIVACY_POLICY_URL } from '../config';
 import type { ScreenProps } from '../navigation';
@@ -67,6 +67,17 @@ export default function SettingsScreen({ navigation }: ScreenProps<'Settings'>) 
           {PRIVACY_POLICY_URL ? <Row title="개인정보처리방침" onPress={() => Linking.openURL(PRIVACY_POLICY_URL)} /> : null}
           <Row title="버전" value={Constants.expoConfig?.version ?? '-'} last />
         </Card>
+
+        {__DEV__ ? (
+          <Card>
+            <Row
+              title="개발용: 프리미엄 강제로 켜기"
+              sub="개발 빌드에만 보여요. 결제 없이 프리미엄 기능을 확인할 때 써요."
+              right={<Toggle value={isDevPremium()} onChange={setDevPremium} />}
+              last
+            />
+          </Card>
+        ) : null}
         <View style={{ height: 8 }} />
       </ScrollView>
 

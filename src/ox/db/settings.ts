@@ -18,7 +18,12 @@ export const getThemeSetting = (): ThemeSetting => {
 };
 export const setThemeSetting = (v: ThemeSetting) => setSetting('theme', v);
 
-export const isPremium = () => getSetting('premium') === '1';
+// 개발 빌드에서는 설정 화면 스위치로 프리미엄을 강제로 켤 수 있다. Play 구매 내역 확인과 따로 저장해서
+// 앱을 켤 때 구매 내역이 없다고 꺼지지 않는다. 출시 빌드에서는 무시된다.
+export const isDevPremium = () => __DEV__ && getSetting('dev_premium') === '1';
+export const setDevPremium = (v: boolean) => setSetting('dev_premium', v ? '1' : null);
+
+export const isPremium = () => getSetting('premium') === '1' || isDevPremium();
 export const setPremium = (v: boolean) => setSetting('premium', v ? '1' : null);
 
 export const getLastCalendarId = () => getSetting('last_calendar');
