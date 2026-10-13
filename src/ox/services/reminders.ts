@@ -67,7 +67,7 @@ const scheduleAll = async () => {
       await Notifications.scheduleNotificationAsync({
         content: {
           title: `오늘 ${cal.name}, 기록하셨나요?`,
-          body: '탭 한 번으로 O, X를 남겨보세요.',
+          body: '오늘 하루를 O, X로 남겨보세요.',
           data: { calendarId: cal.id },
         },
         trigger: { type: SchedulableTriggerInputTypes.DATE, date: at, channelId: CHANNEL_ID },

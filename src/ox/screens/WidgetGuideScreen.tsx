@@ -9,7 +9,7 @@ const STEPS = [
   '홈 화면의 빈 곳을 길게 누르세요.',
   '[위젯]을 누르고 목록에서 "하루 OX 캘린더"를 찾으세요.',
   '"오늘 한 칸", "이번 주", "이번 달" 중 하나를 길게 눌러 홈 화면에 놓으세요.',
-  '연결할 캘린더를 고르면 끝. 이제 위젯을 누르면 앱을 열지 않고 바로 기록돼요.',
+  '연결할 캘린더를 고르면 끝. 이제 위젯에서 날짜를 누르면 바로 기록 화면이 열려요.',
 ];
 
 export default function WidgetGuideScreen({ navigation }: ScreenProps<'WidgetGuide'>) {

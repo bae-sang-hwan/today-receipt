@@ -112,7 +112,7 @@
             {
               "name": "TodayOX",
               "label": "오늘 한 칸",
-              "description": "탭 한 번으로 오늘을 O, X로 기록해요",
+              "description": "오늘 하루를 O, X로 확인하고 기록해요",
               "minWidth": "60dp",
               "minHeight": "60dp",
               "targetCellWidth": 1,
@@ -124,7 +124,7 @@
             {
               "name": "WeekOX",
               "label": "이번 주",
-              "description": "이번 주 7일을 위젯에서 바로 기록해요",
+              "description": "이번 주 7일의 O, X를 한눈에 확인해요",
               "minWidth": "250dp",
               "minHeight": "60dp",
               "targetCellWidth": 4,
@@ -136,7 +136,7 @@
             {
               "name": "MonthOX",
               "label": "이번 달",
-              "description": "이번 달 달력에서 지난 날까지 바로 기록해요",
+              "description": "이번 달 달력으로 O, X를 한눈에 확인해요",
               "minWidth": "180dp",
               "minHeight": "180dp",
               "targetCellWidth": 4,
