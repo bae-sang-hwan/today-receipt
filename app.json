@@ -148,7 +148,8 @@
           ]
         }
       ],
-      "expo-iap"
+      "expo-iap",
+      "./plugins/withGradleMemory"
     ],
     "extra": {
       "eas": {
