@@ -89,6 +89,7 @@
             "extraGCMSenderIds": [],
             "enableMinifyInReleaseBuilds": true,
             "enableShrinkResourcesInReleaseBuilds": true,
+            "extraProguardRules": "# expo-notifications: 예약 알림을 SharedPreferences에 직렬화할 때 쓰는 클래스와 writeObject/readObject를 지킨다. 없으면 릴리스 빌드에서 NotSerializableException(JSONObject)으로 알림 예약이 실패한다.\n-keep class expo.modules.notifications.** { *; }\n-keepclassmembers class * implements java.io.Serializable {\n  static final long serialVersionUID;\n  private void writeObject(java.io.ObjectOutputStream);\n  private void readObject(java.io.ObjectInputStream);\n  java.lang.Object writeReplace();\n  java.lang.Object readResolve();\n}",
             "packagingOptions": {
               "pickFirst": [
                 "**/libjsc.so"
