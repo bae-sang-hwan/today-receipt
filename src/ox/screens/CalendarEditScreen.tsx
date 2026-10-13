@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
@@ -8,7 +8,7 @@ import { haptic } from '../haptics';
 import { countRecords, createCalendar, deleteCalendar, getCalendar, updateCalendar, type MarkStyle } from '../db/repo';
 import { DEFAULT_REMINDER, NAME_MAX_LENGTH } from '../config';
 import { formatReminder } from '../domain/date';
-import { ensureNotificationPermission } from '../services/reminders';
+import { ensureNotificationPermission, hasNotificationPermission } from '../services/reminders';
 import type { ScreenProps } from '../navigation';
 
 // S05 캘린더 추가/편집
@@ -25,10 +25,22 @@ export default function CalendarEditScreen({ navigation, route }: ScreenProps<'C
   const [permissionDenied, setPermissionDenied] = useState(false);
   const trimmed = name.trim();
 
-  const save = () => {
-    if (!trimmed) return;
-    if (initial) updateCalendar(initial.id, { name: trimmed, color, markStyle, reminder });
-    else createCalendar({ name: trimmed, color, markStyle, reminder });
+  const saving = useRef(false);
+
+  // 알림이 켜진 캘린더인데 시스템에서 알림 권한이 꺼져 있으면 바로 알려준다.
+  useEffect(() => {
+    if (!initial?.reminder) return;
+    hasNotificationPermission().then((granted) => setPermissionDenied(!granted));
+  }, [initial]);
+
+  const save = async () => {
+    if (!trimmed || saving.current) return;
+    saving.current = true;
+    // 새 캘린더는 알림이 기본으로 켜져 있어 토글을 거치지 않으므로 저장할 때 권한을 묻는다. 거부하면 알림을 끈다.
+    let nextReminder = reminder;
+    if (nextReminder && !(await ensureNotificationPermission())) nextReminder = null;
+    if (initial) updateCalendar(initial.id, { name: trimmed, color, markStyle, reminder: nextReminder });
+    else createCalendar({ name: trimmed, color, markStyle, reminder: nextReminder });
     haptic.success();
     navigation.goBack();
   };

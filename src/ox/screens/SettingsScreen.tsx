@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import { Linking, ScrollView, StyleSheet, View } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { AppState, Linking, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Constants from 'expo-constants';
 import auth from '@react-native-firebase/auth';
@@ -10,6 +10,7 @@ import { listCalendars } from '../db/repo';
 import { getThemeSetting, getWeekStart, isDevPremium, setDevPremium, setThemeSetting, setWeekStart, type ThemeSetting } from '../db/settings';
 import type { WeekStart } from '../domain/date';
 import { CONTACT_EMAIL, PRIVACY_POLICY_URL } from '../config';
+import { hasNotificationPermission, openNotificationSettings } from '../services/reminders';
 import type { ScreenProps } from '../navigation';
 
 const THEME_LABEL: Record<ThemeSetting, string> = { system: '시스템', light: '밝게', dark: '어둡게' };
@@ -27,6 +28,7 @@ export default function SettingsScreen({ navigation }: ScreenProps<'Settings'>) 
   const weekStart = useMemo(() => getWeekStart(), [version]);
   const user = auth().currentUser;
   const syncOn = !!user && !user.isAnonymous;
+  const notificationOn = useNotificationPermission();
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={['top', 'bottom']}>
@@ -49,6 +51,17 @@ export default function SettingsScreen({ navigation }: ScreenProps<'Settings'>) 
           <Row title="캘린더 관리" value={`${calendarCount}개`} onPress={() => navigation.navigate('CalendarManage')} />
           <Row title="한 주의 시작" value={WEEK_LABEL[weekStart]} onPress={() => setSheet('week')} />
           <Row title="화면 테마" value={THEME_LABEL[theme]} onPress={() => setSheet('theme')} last />
+        </Card>
+
+        <Card>
+          <Row
+            title="알림"
+            sub={notificationOn ? '캘린더마다 매일 알림 시각을 정할 수 있어요' : '알림이 꺼져 있어 매일 알림이 오지 않아요'}
+            onPress={openNotificationSettings}
+            chevron={false}
+            right={<Toggle value={notificationOn} onChange={openNotificationSettings} />}
+            last
+          />
         </Card>
 
         <Card>
@@ -107,6 +120,18 @@ export default function SettingsScreen({ navigation }: ScreenProps<'Settings'>) 
     </SafeAreaView>
   );
 }
+
+// 시스템 알림 허용 여부. 설정 화면에서 바꾸고 돌아오면 다시 읽는다.
+const useNotificationPermission = () => {
+  const [granted, setGranted] = useState(false);
+  useEffect(() => {
+    const refresh = () => hasNotificationPermission().then(setGranted);
+    refresh();
+    const sub = AppState.addEventListener('change', (s) => s === 'active' && refresh());
+    return () => sub.remove();
+  }, []);
+  return granted;
+};
 
 const styles = StyleSheet.create({
   body: { padding: 16, gap: 12 },

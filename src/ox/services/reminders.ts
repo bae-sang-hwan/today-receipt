@@ -1,3 +1,5 @@
+import { Linking } from 'react-native';
+import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
 import { SchedulableTriggerInputTypes } from 'expo-notifications';
 import { getRecordsInRange, listCalendars } from '../db/repo';
@@ -5,6 +7,19 @@ import { addDays, parseDateKey, todayKey } from '../domain/date';
 import { REMINDER_SCHEDULE_DAYS } from '../config';
 
 const CHANNEL_ID = 'reminder';
+
+export const hasNotificationPermission = async () => (await Notifications.getPermissionsAsync()).status === 'granted';
+
+// 이 앱의 시스템 알림 설정 화면을 연다. 실패하면 앱 정보 화면으로 대신 간다.
+export const openNotificationSettings = async () => {
+  const pkg = Constants.expoConfig?.android?.package;
+  try {
+    if (!pkg) throw new Error('no package');
+    await Linking.sendIntent('android.settings.APP_NOTIFICATION_SETTINGS', [{ key: 'android.provider.extra.APP_PACKAGE', value: pkg }]);
+  } catch {
+    await Linking.openSettings();
+  }
+};
 
 export const ensureNotificationPermission = async () => {
   const { status } = await Notifications.getPermissionsAsync();
