@@ -212,7 +212,7 @@ export default function MainScreen({ navigation, route }: ScreenProps<'Main'>) {
                   disabled={future}
                   pressedOpacity={0.75}
                   onPress={() => onTapDay(key)}
-                  accessibilityLabel={`${parseDateKey(key).getDate()}일 ${value === 'O' ? 'O' : value === 'X' ? 'X' : '기록 없음'}`}
+                  accessibilityLabel={`${parseDateKey(key).getDate()}일 ${value === 'O' ? 'O' : value === 'X' ? 'X' : '기록 없음'}${rec?.photo ? ', 사진 있음' : ''}`}
                   style={[
                     styles.cell,
                     {
@@ -226,6 +226,7 @@ export default function MainScreen({ navigation, route }: ScreenProps<'Main'>) {
                 >
                   <Txt style={[styles.dayNum, { color: colors.muted }]}>{parseDateKey(key).getDate()}</Txt>
                   {rec?.memo ? <View style={[styles.memoDot, { backgroundColor: colors.muted }]} /> : null}
+                  {rec?.photo ? <Ionicons name="image" size={9} color={colors.muted} style={[styles.photoMark, rec.memo ? { right: 13 } : null]} /> : null}
                   {/* 칸을 거의 채우되, 왼쪽 위 날짜 숫자와 겹치지 않게 조금 아래로 내린다. */}
                   <View style={{ marginTop: 6 }}>
                     <Mark value={value} markStyle={calendar.markStyle} size={cellSize * 0.75} />
@@ -237,7 +238,7 @@ export default function MainScreen({ navigation, route }: ScreenProps<'Main'>) {
 
           {!hintShown && isCurrentMonth ? (
             <Txt style={{ textAlign: 'center', color: colors.muted, fontSize: 13, marginTop: 14 }}>
-              날짜를 눌러 O나 X를 기록하고 메모도 남겨 보세요.
+              날짜를 눌러 O나 X를 기록하고 메모와 사진도 남겨 보세요.
             </Txt>
           ) : null}
 
@@ -275,6 +276,7 @@ const styles = StyleSheet.create({
   cell: { borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   dayNum: { position: 'absolute', top: 4, left: 6, fontSize: 11 },
   memoDot: { position: 'absolute', top: 6, right: 6, width: 5, height: 5, borderRadius: 3 },
+  photoMark: { position: 'absolute', top: 4, right: 4 },
   streak: {
     marginTop: 'auto', marginBottom: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     borderWidth: StyleSheet.hairlineWidth, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 12,

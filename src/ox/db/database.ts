@@ -30,6 +30,13 @@ const MIGRATIONS = [
      key TEXT PRIMARY KEY NOT NULL,
      value TEXT NOT NULL
    );`,
+  // 기록에 사진 한 장. photo는 사진 id(빈 문자열이면 없음), 파일은 앱 문서 폴더에 둔다.
+  // photo_ops는 로그인 시 서버(Storage)에 올리거나 지워야 할 사진 목록이다.
+  `ALTER TABLE records ADD COLUMN photo TEXT NOT NULL DEFAULT '';
+   CREATE TABLE IF NOT EXISTS photo_ops (
+     id TEXT PRIMARY KEY NOT NULL,
+     op TEXT NOT NULL
+   );`,
 ];
 
 export const getDb = () => {

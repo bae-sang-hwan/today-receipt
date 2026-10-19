@@ -1,6 +1,7 @@
 import { getDb } from './database';
 import { DEFAULT_REMINDER } from '../config';
 import { todayKey } from '../domain/date';
+import { deleteLocalPhoto } from './photos';
 
 export type MarkValue = 'O' | 'X' | '';
 export type MarkStyle = 'ox' | 'check';
@@ -21,6 +22,7 @@ export interface DayRecord {
   date: string;
   value: MarkValue;
   memo: string;
+  photo: string; // 사진 id, 없으면 ''
   updatedAt: number;
 }
 
@@ -42,6 +44,7 @@ interface RecordRow {
   date: string;
   value: string;
   memo: string;
+  photo: string;
   updated_at: number;
   dirty: number;
 }
@@ -62,6 +65,7 @@ const toRecord = (r: RecordRow): DayRecord => ({
   date: r.date,
   value: (r.value === 'O' || r.value === 'X' ? r.value : '') as MarkValue,
   memo: r.memo,
+  photo: r.photo,
   updatedAt: r.updated_at,
 });
 
@@ -88,6 +92,23 @@ export const now = () => {
   const t = Date.now();
   lastStamp = t > lastStamp ? t : lastStamp + 1;
   return lastStamp;
+};
+
+// ---- 사진: 기기 파일을 지우고, 서버에 올라간 적이 있으면 서버에서도 지우도록 남긴다 ----
+
+const releasePhoto = (id: string) => {
+  if (!id) return;
+  deleteLocalPhoto(id);
+  const db = getDb();
+  const pending = db.getFirstSync<{ op: string }>('SELECT op FROM photo_ops WHERE id = ?', [id]);
+  if (pending?.op === 'upload') db.runSync('DELETE FROM photo_ops WHERE id = ?', [id]);
+  else db.runSync("INSERT OR REPLACE INTO photo_ops (id, op) VALUES (?, 'delete')", [id]);
+};
+
+const releaseCalendarPhotos = (calendarId: string) => {
+  getDb()
+    .getAllSync<{ photo: string }>("SELECT photo FROM records WHERE calendar_id = ? AND photo != ''", [calendarId])
+    .forEach((r) => releasePhoto(r.photo));
 };
 
 const newId = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
@@ -152,6 +173,7 @@ export const deleteCalendar = (id: string) => {
   const db = getDb();
   db.withTransactionSync(() => {
     db.runSync('UPDATE calendars SET deleted = 1, updated_at = ?, dirty = 1 WHERE id = ?', [now(), id]);
+    releaseCalendarPhotos(id);
     db.runSync('DELETE FROM records WHERE calendar_id = ?', [id]);
   });
   emitChange('calendar');
@@ -184,14 +206,23 @@ export const getRecord = (calendarId: string, date: string): DayRecord | null =>
   return row ? toRecord(row) : null;
 };
 
-// 동기화를 위해 빈칸도 행을 남긴다.
-export const saveRecord = (calendarId: string, date: string, value: MarkValue, memo: string) => {
+// 동기화를 위해 빈칸도 행을 남긴다. photo는 사진 id('' = 없음). 바뀌면 이전 사진은 지운다.
+export const saveRecord = (calendarId: string, date: string, value: MarkValue, memo: string, photo: string) => {
   if (date > todayKey()) return;
-  getDb().runSync(
-    `INSERT INTO records (calendar_id, date, value, memo, updated_at, dirty) VALUES (?, ?, ?, ?, ?, 1)
-     ON CONFLICT(calendar_id, date) DO UPDATE SET value = excluded.value, memo = excluded.memo, updated_at = excluded.updated_at, dirty = 1`,
-    [calendarId, date, value, memo, now()],
-  );
+  const db = getDb();
+  const prev = getRecord(calendarId, date)?.photo ?? '';
+  db.withTransactionSync(() => {
+    db.runSync(
+      `INSERT INTO records (calendar_id, date, value, memo, photo, updated_at, dirty) VALUES (?, ?, ?, ?, ?, ?, 1)
+       ON CONFLICT(calendar_id, date) DO UPDATE SET value = excluded.value, memo = excluded.memo, photo = excluded.photo,
+         updated_at = excluded.updated_at, dirty = 1`,
+      [calendarId, date, value, memo, photo, now()],
+    );
+    if (photo !== prev) {
+      releasePhoto(prev);
+      if (photo) db.runSync("INSERT OR REPLACE INTO photo_ops (id, op) VALUES (?, 'upload')", [photo]);
+    }
+  });
   emitChange('record');
 };
 
@@ -217,9 +248,14 @@ export const markCalendarClean = (id: string, updatedAt: number) =>
 export const markRecordClean = (calendarId: string, date: string, updatedAt: number) =>
   getDb().runSync('UPDATE records SET dirty = 0 WHERE calendar_id = ? AND date = ? AND updated_at = ?', [calendarId, date, updatedAt]);
 
+export const getPhotoOps = () => getDb().getAllSync<{ id: string; op: 'upload' | 'delete' }>('SELECT * FROM photo_ops');
+export const clearPhotoOp = (id: string, op: string) => getDb().runSync('DELETE FROM photo_ops WHERE id = ? AND op = ?', [id, op]);
+
+// 처음 로그인할 때: 기기의 모든 행과 사진을 다시 올린다.
 export const markAllDirty = () => {
   const db = getDb();
-  db.execSync('UPDATE calendars SET dirty = 1; UPDATE records SET dirty = 1;');
+  db.execSync(`UPDATE calendars SET dirty = 1; UPDATE records SET dirty = 1;
+    INSERT OR REPLACE INTO photo_ops (id, op) SELECT photo, 'upload' FROM records WHERE photo != '';`);
 };
 
 export const getCalendarRowAny = (id: string) => getDb().getFirstSync<CalendarRow>('SELECT * FROM calendars WHERE id = ?', [id]);
@@ -238,17 +274,27 @@ export const applyRemoteCalendar = (r: {
          deleted = excluded.deleted, dirty = 0`,
       [r.id, r.name, r.color, r.markStyle, r.order, r.reminder, r.createdAt, r.updatedAt, r.deleted ? 1 : 0],
     );
-    if (r.deleted) db.runSync('DELETE FROM records WHERE calendar_id = ?', [r.id]);
+    if (r.deleted) {
+      releaseCalendarPhotos(r.id);
+      db.runSync('DELETE FROM records WHERE calendar_id = ?', [r.id]);
+    }
   });
 };
 
 export const getRecordRowAny = (calendarId: string, date: string) =>
   getDb().getFirstSync<RecordRow>('SELECT * FROM records WHERE calendar_id = ? AND date = ?', [calendarId, date]);
 
-export const applyRemoteRecord = (r: { calendarId: string; date: string; value: string; memo: string; updatedAt: number }) => {
-  getDb().runSync(
-    `INSERT INTO records (calendar_id, date, value, memo, updated_at, dirty) VALUES (?, ?, ?, ?, ?, 0)
-     ON CONFLICT(calendar_id, date) DO UPDATE SET value = excluded.value, memo = excluded.memo, updated_at = excluded.updated_at, dirty = 0`,
-    [r.calendarId, r.date, r.value, r.memo, r.updatedAt],
-  );
+// 서버 사진은 화면에 보여줄 때 받아온다. 기기에만 있던 이전 사진은 여기서 정리한다.
+export const applyRemoteRecord = (r: { calendarId: string; date: string; value: string; memo: string; photo: string; updatedAt: number }) => {
+  const db = getDb();
+  const prev = getRecordRowAny(r.calendarId, r.date)?.photo ?? '';
+  db.withTransactionSync(() => {
+    db.runSync(
+      `INSERT INTO records (calendar_id, date, value, memo, photo, updated_at, dirty) VALUES (?, ?, ?, ?, ?, ?, 0)
+       ON CONFLICT(calendar_id, date) DO UPDATE SET value = excluded.value, memo = excluded.memo, photo = excluded.photo,
+         updated_at = excluded.updated_at, dirty = 0`,
+      [r.calendarId, r.date, r.value, r.memo, r.photo, r.updatedAt],
+    );
+    if (r.photo !== prev) releasePhoto(prev);
+  });
 };

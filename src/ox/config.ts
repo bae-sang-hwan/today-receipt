@@ -21,6 +21,10 @@ export const ACCOUNT_DELETION_URL = 'https://bae-sang-hwan.github.io/today-recei
 export const NAME_MAX_LENGTH = 12;
 export const MEMO_MAX_LENGTH = 50;
 
+// 기록 사진은 긴 변을 이 크기(px)로 줄이고 JPEG로 압축해 저장·백업한다.
+export const PHOTO_MAX_SIZE = 1280;
+export const PHOTO_QUALITY = 0.7;
+
 // 매일 알림을 미리 예약해 두는 기간. 이 기간 동안 앱을 안 열면 알림이 멈춘다.
 export const REMINDER_SCHEDULE_DAYS = 30;
 export const DEFAULT_REMINDER = '21:00';

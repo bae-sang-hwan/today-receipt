@@ -101,6 +101,13 @@
       "@react-native-google-signin/google-signin",
       "expo-sqlite",
       [
+        "expo-image-picker",
+        {
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ],
+      [
         "react-native-android-widget",
         {
           "fonts": [
