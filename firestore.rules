@@ -4,91 +4,15 @@ service cloud.firestore {
 
     function isSignedIn() { return request.auth != null; }
 
-    function familyIdOf(uid) {
-      return exists(/databases/$(database)/documents/userFamily/$(uid))
-        ? get(/databases/$(database)/documents/userFamily/$(uid)).data.familyId
-        : null;
-    }
-
-    // pigStates 문서 id는 `${familyId 또는 uid}_${yyyy-MM}` 형태로 고정 생성되므로,
-    // 문서가 아직 존재하지 않아도(resource == null) 소유권을 판단할 수 있다.
-    function pigStateOwnerKey(stateId) {
-      return stateId.split('_')[0];
-    }
-    function canAccessPigState(stateId) {
-      return pigStateOwnerKey(stateId) == request.auth.uid ||
-        (familyIdOf(request.auth.uid) != null && familyIdOf(request.auth.uid) == pigStateOwnerKey(stateId));
-    }
-
-    match /receipts/{receiptId} {
-      allow read: if isSignedIn() && (
-        request.auth.uid == resource.data.userId ||
-        (familyIdOf(request.auth.uid) != null &&
-         familyIdOf(request.auth.uid) == familyIdOf(resource.data.userId))
-      );
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isSignedIn() && request.auth.uid == resource.data.userId;
-    }
-
+    // 하루 OX 캘린더 백업: users/{uid}, users/{uid}/calendars, users/{uid}/records
     match /users/{userId} {
       allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
-
-    // 하루 OX 캘린더 백업: users/{uid}/calendars, users/{uid}/records
     match /users/{userId}/{document=**} {
       allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
 
-    match /families/{familyId} {
-      allow read: if isSignedIn() && request.auth.uid in resource.data.memberIds;
-      allow create: if isSignedIn() && request.auth.uid == request.resource.data.ownerId
-                    && request.resource.data.memberIds.size() <= 2;
-      allow update: if isSignedIn() && (
-        request.auth.uid in resource.data.memberIds ||
-        request.auth.uid in request.resource.data.memberIds
-      ) && request.resource.data.memberIds.size() <= 2;
-      allow delete: if isSignedIn() && request.auth.uid == resource.data.ownerId;
-    }
-
-    match /userFamily/{uid} {
-      allow read: if isSignedIn();
-      allow write: if isSignedIn() && (
-        request.auth.uid == uid ||
-        (resource != null &&
-         request.auth.uid == get(/databases/$(database)/documents/families/$(resource.data.familyId)).data.ownerId)
-      );
-    }
-
-    match /inviteCodes/{code} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn() && request.auth.uid == request.resource.data.createdBy;
-      allow update, delete: if false;
-    }
-
-    match /pushTokens/{uid} {
-      allow read, write: if isSignedIn() && request.auth.uid == uid;
-    }
-
-    // 돼지 XP 상태(월별, 가족 공유 또는 개인). 문서 id는 클라이언트에서
-    // `${familyId 또는 uid}_${yyyy-MM}`으로 고정 생성한다.
-    match /pigStates/{stateId} {
-      allow read, write: if isSignedIn() && canAccessPigState(stateId);
-    }
-
-    // 하루 무료 먹이 횟수 카운트. 문서 id는 `${familyId 또는 uid}_${yyyy-MM-dd}`.
-    match /pigDailyFeedState/{stateId} {
-      allow read, write: if isSignedIn() && canAccessPigState(stateId);
-    }
-
-    // 먹이(영수증) 소비 상태. 월과 무관한 전역 재화라 문서 id가 곧 소유자 키
-    // (familyId 또는 uid) 그 자체다.
-    match /pigFoodState/{ownerKey} {
-      allow read, write: if isSignedIn() && (
-        ownerKey == request.auth.uid ||
-        (familyIdOf(request.auth.uid) != null && familyIdOf(request.auth.uid) == ownerKey)
-      );
-    }
-
+    // 예전 영수증 앱(1.x)의 강제 업데이트 안내
     match /config/{document} {
       allow read: if isSignedIn();
       allow write: if false;
