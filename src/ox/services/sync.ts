@@ -18,7 +18,8 @@ import {
 import { getLastPull, setLastPull, setLastSyncAt, setSyncError } from '../db/settings';
 import { photoFile } from '../db/photos';
 
-// 기기 저장소가 기준. 로그인한 경우에만 바뀐 행(dirty)을 올리고, 서버에서 바뀐 것을 받아온다.
+// 기기 저장소가 기준. 바뀐 행(dirty)을 올리고, 서버에서 바뀐 것을 받아온다.
+// Google로 로그인하지 않았으면 익명 계정을 만들어 그 계정으로 올린다.
 // 같은 날짜가 겹치면 updatedAt이 더 늦은 값을 남긴다.
 // 서버 경로: users/{uid}/calendars/{id}, users/{uid}/records/{calendarId}_{date}
 // 사진 파일은 Storage의 users/{uid}/photos/{photoId}.jpg에 둔다.
@@ -39,9 +40,16 @@ export const syncErrorMessage = (code: string) => {
   return '동기화하지 못했어요. 잠시 후 다시 시도해 주세요';
 };
 
-export const getSyncUser = () => {
+export const getSyncUser = () => auth().currentUser;
+
+// 익명 계정을 새로 만들면 기기의 기록과 사진을 처음부터 다시 올린다.
+const ensureSyncUser = async () => {
   const user = auth().currentUser;
-  return user && !user.isAnonymous ? user : null;
+  if (user) return user;
+  const { user: anon } = await auth().signInAnonymously();
+  markAllDirty();
+  setLastPull(0);
+  return anon;
 };
 
 const userDoc = (uid: string) => firestore().collection('users').doc(uid);
@@ -52,7 +60,6 @@ let running: Promise<boolean> | null = null;
 let again = false;
 
 export const syncNow = (): Promise<boolean> => {
-  if (!getSyncUser()) return Promise.resolve(false);
   if (running) {
     again = true;
     return running;
@@ -87,7 +94,6 @@ export const fullSync = () => {
 
 let timer: ReturnType<typeof setTimeout> | null = null;
 export const scheduleSync = () => {
-  if (!getSyncUser()) return;
   if (timer) clearTimeout(timer);
   timer = setTimeout(() => {
     timer = null;
@@ -96,8 +102,7 @@ export const scheduleSync = () => {
 };
 
 const runOnce = async () => {
-  const user = getSyncUser();
-  if (!user) return;
+  const user = await ensureSyncUser();
   // 먼저 받아온다. 서버 값이 더 최신이면 기기 값을 덮고 dirty가 풀리므로,
   // 오래된 기기 값이 서버의 최신 값을 덮어쓰지 않는다.
   await pull(user.uid);

@@ -1,7 +1,7 @@
-import auth from '@react-native-firebase/auth';
+import auth, { type FirebaseAuthTypes } from '@react-native-firebase/auth';
 import { GoogleSignin, isErrorWithCode, statusCodes } from '@react-native-google-signin/google-signin';
 import { GOOGLE_WEB_CLIENT_ID } from '../config';
-import { deleteRemoteData, fullSync, getSyncUser } from './sync';
+import { deleteRemoteData, fullSync } from './sync';
 import { setLastPull, setLastSyncAt, setSyncError } from '../db/settings';
 import { emitChange } from '../db/repo';
 
@@ -22,12 +22,36 @@ const googleCredential = async () => {
   return auth.GoogleAuthProvider.credential(idToken);
 };
 
+// 익명 계정이 있으면 Google 계정을 연결해 같은 uid로 이어 쓴다.
+// 이미 쓰던 Google 계정이면 익명 계정의 서버 데이터를 지우고 그 계정으로 로그인한다.
+// 기기의 기록은 이어서 fullSync로 그 계정에 합친다.
+const linkOrSignIn = async (credential: FirebaseAuthTypes.AuthCredential) => {
+  const anon = auth().currentUser;
+  if (!anon?.isAnonymous) {
+    await auth().signInWithCredential(credential);
+    return;
+  }
+  try {
+    await anon.linkWithCredential(credential);
+    return;
+  } catch (e) {
+    if ((e as { code?: string })?.code !== 'auth/credential-already-in-use') throw e;
+  }
+  try {
+    await deleteRemoteData(anon.uid);
+    await anon.delete();
+  } catch (e) {
+    console.warn('익명 계정 정리 실패:', e);
+  }
+  await auth().signInWithCredential(credential);
+};
+
 // 성공하면 true, 사용자가 취소하면 false
 export const signInWithGoogle = async () => {
   try {
     const credential = await googleCredential();
     if (!credential) return false;
-    await auth().signInWithCredential(credential);
+    await linkOrSignIn(credential);
     emitChange('setting');
     await fullSync();
     return true;
@@ -43,7 +67,7 @@ const clearSyncState = () => {
   setSyncError(null);
 };
 
-// 기기의 기록은 남기고 동기화만 멈춘다.
+// 기기의 기록은 남긴다. 다음 동기화부터는 새 익명 계정으로 올린다.
 export const signOut = async () => {
   configure();
   try {
@@ -56,8 +80,8 @@ export const signOut = async () => {
 
 // 서버 기록과 계정을 지운다. 기기의 기록은 남긴다.
 export const deleteAccount = async () => {
-  const user = getSyncUser();
-  if (!user) return;
+  const user = auth().currentUser;
+  if (!user || user.isAnonymous) return;
   await deleteRemoteData(user.uid);
   try {
     await user.delete();
