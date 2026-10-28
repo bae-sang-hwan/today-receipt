@@ -1,4 +1,4 @@
-import auth from '@react-native-firebase/auth';
+import auth, { type FirebaseAuthTypes } from '@react-native-firebase/auth';
 import firestore, { type FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import {
@@ -21,7 +21,7 @@ import { photoFile } from '../db/photos';
 // 기기 저장소가 기준. 바뀐 행(dirty)을 올리고, 서버에서 바뀐 것을 받아온다.
 // Google로 로그인하지 않았으면 익명 계정을 만들어 그 계정으로 올린다.
 // 같은 날짜가 겹치면 updatedAt이 더 늦은 값을 남긴다.
-// 서버 경로: users/{uid}/calendars/{id}, users/{uid}/records/{calendarId}_{date}
+// 서버 경로: users/{uid}(isAnonymous, lastSyncAt, createdAt), users/{uid}/calendars/{id}, users/{uid}/records/{calendarId}_{date}
 // 사진 파일은 Storage의 users/{uid}/photos/{photoId}.jpg에 둔다.
 
 const BATCH_LIMIT = 400;
@@ -109,6 +109,20 @@ const runOnce = async () => {
   // 기록보다 사진을 먼저 올려, 다른 기기가 기록을 받았을 때 사진도 받을 수 있게 한다.
   await pushPhotos(user.uid);
   await push(user.uid);
+  await touchUserDoc(user);
+};
+
+// 콘솔에서 사용자 문서가 보이고 익명 여부·최근 동기화로 찾을 수 있게 남긴다.
+const touchUserDoc = (user: FirebaseAuthTypes.User) => {
+  const created = user.metadata.creationTime ? new Date(user.metadata.creationTime) : null;
+  return userDoc(user.uid).set(
+    {
+      isAnonymous: user.isAnonymous,
+      lastSyncAt: firestore.FieldValue.serverTimestamp(),
+      ...(created && !isNaN(created.getTime()) ? { createdAt: firestore.Timestamp.fromDate(created) } : {}),
+    },
+    { merge: true },
+  );
 };
 
 const pushPhotos = async (uid: string) => {
