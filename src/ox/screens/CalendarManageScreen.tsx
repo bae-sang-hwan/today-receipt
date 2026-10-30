@@ -89,7 +89,7 @@ export default function CalendarManageScreen({ navigation }: ScreenProps<'Calend
         </Tap>
 
         {!premium ? (
-          <Tap onPress={() => navigation.navigate('Premium')} style={[styles.note, { borderColor: colors.line }]}>
+          <Tap onPress={() => navigation.navigate('Premium')} style={[styles.note, { backgroundColor: colors.cell }]}>
             <Txt style={{ color: colors.muted, fontSize: 13.5 }}>
               무료로 {FREE_CALENDAR_LIMIT}개까지 만들 수 있어요. <Txt weight="bold" style={{ fontSize: 13.5 }}>프리미엄</Txt>은 무제한.
             </Txt>
@@ -106,5 +106,5 @@ const styles = StyleSheet.create({
   dot: { width: 12, height: 12, borderRadius: 6 },
   dragging: { zIndex: 1, elevation: 6, opacity: 0.95 },
   add: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6, borderWidth: 1.5, borderStyle: 'dashed', borderRadius: 14, paddingVertical: 15 },
-  note: { borderWidth: 1, borderStyle: 'dashed', borderRadius: 12, padding: 14 },
+  note: { borderRadius: 12, padding: 14 },
 });

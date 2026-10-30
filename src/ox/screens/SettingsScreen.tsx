@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { AppState, Linking, ScrollView, StyleSheet, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Constants from 'expo-constants';
 import auth from '@react-native-firebase/auth';
@@ -9,7 +10,7 @@ import { useDataVersion, usePremium } from '../hooks';
 import { listCalendars } from '../db/repo';
 import { getThemeSetting, getWeekStart, isDevPremium, setDevPremium, setThemeSetting, setWeekStart, type ThemeSetting } from '../db/settings';
 import type { WeekStart } from '../domain/date';
-import { CONTACT_EMAIL, PRIVACY_POLICY_URL } from '../config';
+import { PRIVACY_POLICY_URL } from '../config';
 import { hasNotificationPermission, openNotificationSettings } from '../services/reminders';
 import type { ScreenProps } from '../navigation';
 
@@ -40,10 +41,13 @@ export default function SettingsScreen({ navigation }: ScreenProps<'Settings'>) 
           </Card>
         ) : (
           <Tap onPress={() => navigation.navigate('Premium')} style={[styles.pro, { backgroundColor: colors.ink }]}>
-            <Txt weight="bold" style={{ color: colors.inverseText, fontSize: 16 }}>
-              프리미엄으로 업그레이드
-            </Txt>
-            <Txt style={{ color: colors.inverseText, opacity: 0.75, fontSize: 13 }}>광고 없이, 캘린더 무제한 · 한 번만 결제</Txt>
+            <View style={{ flex: 1, gap: 3 }}>
+              <Txt weight="bold" style={{ color: colors.inverseText, fontSize: 16 }}>
+                프리미엄으로 업그레이드
+              </Txt>
+              <Txt style={{ color: colors.inverseText, opacity: 0.75, fontSize: 13 }}>광고 없이, 캘린더 무제한 · 한 번만 결제</Txt>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={colors.inverseText} style={{ opacity: 0.75 }} />
           </Tap>
         )}
 
@@ -76,7 +80,6 @@ export default function SettingsScreen({ navigation }: ScreenProps<'Settings'>) 
 
         <Card>
           <Row title="위젯 추가하는 법" onPress={() => navigation.navigate('WidgetGuide')} />
-          {CONTACT_EMAIL ? <Row title="문의하기" value={CONTACT_EMAIL} onPress={() => Linking.openURL(`mailto:${CONTACT_EMAIL}`)} /> : null}
           {PRIVACY_POLICY_URL ? <Row title="개인정보처리방침" onPress={() => Linking.openURL(PRIVACY_POLICY_URL)} /> : null}
           <Row title="버전" value={Constants.expoConfig?.version ?? '-'} last />
         </Card>
@@ -135,5 +138,5 @@ const useNotificationPermission = () => {
 
 const styles = StyleSheet.create({
   body: { padding: 16, gap: 12 },
-  pro: { borderRadius: 14, padding: 16, gap: 3 },
+  pro: { borderRadius: 14, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12 },
 });

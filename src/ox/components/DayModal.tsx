@@ -104,7 +104,7 @@ export const DayModal = ({ calendar, date, onClose }: { calendar: Calendar; date
                   accessibilityLabel={v}
                   accessibilityState={{ selected: on }}
                 >
-                  <Mark value={v} markStyle={calendar.markStyle} size={44} />
+                  <Mark value={v} markStyle={calendar.markStyle} size={52} />
                 </Tap>
               );
             })}

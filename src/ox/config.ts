@@ -14,7 +14,6 @@ export const BANNER_AD_UNIT_ID = __DEV__ ? TestIds.ADAPTIVE_BANNER : 'ca-app-pub
 export const GOOGLE_WEB_CLIENT_ID = '296991066097-2i9s6lddu6afbpidckl8ttt0k064jm6r.apps.googleusercontent.com';
 
 // 비어 있으면 설정 화면에서 해당 줄을 숨긴다. 출시 전에 채워야 한다.
-export const CONTACT_EMAIL = '01039766629b@gmail.com';
 export const PRIVACY_POLICY_URL = 'https://bae-sang-hwan.github.io/today-receipt/';
 export const ACCOUNT_DELETION_URL = 'https://bae-sang-hwan.github.io/today-receipt/delete-account';
 

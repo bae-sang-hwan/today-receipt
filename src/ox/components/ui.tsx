@@ -82,7 +82,7 @@ export const Button = ({
       : variant === 'outline'
         ? { borderWidth: 1.5, borderColor: colors.line }
         : variant === 'danger'
-          ? { borderWidth: 1.5, borderColor: colors.xSoft }
+          ? { backgroundColor: colors.xSoft }
           : {};
   const color = variant === 'primary' ? colors.inverseText : variant === 'danger' ? colors.x : colors.muted;
   return (
@@ -149,7 +149,11 @@ export const Row = ({
         <Txt style={titleStyle}>{title}</Txt>
         {sub ? <Txt style={{ fontSize: 12.5, color: colors.muted, marginTop: 2 }}>{sub}</Txt> : null}
       </View>
-      {value ? <Txt style={{ color: colors.muted, fontSize: 14 }}>{value}</Txt> : null}
+      {value ? (
+        <Txt numberOfLines={1} style={{ color: colors.muted, fontSize: 14, flexShrink: 1 }}>
+          {value}
+        </Txt>
+      ) : null}
       {right}
       {chevron ? <Ionicons name="chevron-forward" size={18} color={colors.faint} /> : null}
     </View>
@@ -166,7 +170,7 @@ export const Toggle = ({ value, onChange }: { value: boolean; onChange: (v: bool
         haptic.tap();
         onChange(v);
       }}
-      trackColor={{ true: colors.o, false: colors.line }}
+      trackColor={{ true: colors.o, false: colors.faint }}
       thumbColor="#FFFFFF"
     />
   );

@@ -7,7 +7,7 @@ import { Tap, Txt, Mark } from '../components/ui';
 import { BannerSlot } from '../components/BannerSlot';
 import { DayModal } from '../components/DayModal';
 import { useDragReorder } from '../components/reorder';
-import { useTheme, fonts } from '../theme';
+import { useTheme } from '../theme';
 import { useDataVersion, useToday } from '../hooks';
 import { haptic } from '../haptics';
 import { getRecordsInRange, getSetting, listCalendars, reorderCalendars, setSetting, type Calendar } from '../db/repo';
@@ -193,7 +193,7 @@ export default function MainScreen({ navigation, route }: ScreenProps<'Main'>) {
 
           <View style={[styles.row, { gap: GAP, marginBottom: 6 }]}>
             {labels.map((l) => (
-              <Txt key={l} weight="medium" style={{ width: cellSize, textAlign: 'center', fontSize: 12, color: l === '일' ? colors.x : colors.muted }}>
+              <Txt key={l} weight="medium" style={{ width: cellSize, textAlign: 'center', fontSize: 12, color: l === '일' ? colors.x : l === '토' ? colors.o : colors.muted }}>
                 {l}
               </Txt>
             ))}
@@ -221,10 +221,10 @@ export default function MainScreen({ navigation, route }: ScreenProps<'Main'>) {
                       backgroundColor: value === 'O' ? colors.oSoft : value === 'X' ? colors.xSoft : colors.cell,
                       opacity: future ? 0.4 : 1,
                     },
-                    isToday && { borderWidth: 2, borderColor: colors.ink },
+                    isToday && { borderWidth: 1.5, borderColor: colors.ink },
                   ]}
                 >
-                  <Txt style={[styles.dayNum, { color: colors.muted }]}>{parseDateKey(key).getDate()}</Txt>
+                  <Txt weight={isToday ? 'bold' : 'regular'} style={[styles.dayNum, { color: isToday ? colors.ink : colors.muted }]}>{parseDateKey(key).getDate()}</Txt>
                   {rec?.memo ? <View style={[styles.memoDot, { backgroundColor: colors.muted }]} /> : null}
                   {rec?.photo ? <Ionicons name="image" size={9} color={colors.muted} style={[styles.photoMark, rec.memo ? { right: 13 } : null]} /> : null}
                   {/* 칸을 거의 채우되, 왼쪽 위 날짜 숫자와 겹치지 않게 조금 아래로 내린다. */}
@@ -247,8 +247,8 @@ export default function MainScreen({ navigation, route }: ScreenProps<'Main'>) {
             style={[styles.streak, { backgroundColor: colors.surface, borderColor: colors.line }]}
           >
             <Txt style={{ color: colors.muted, fontSize: 14 }}>연속 기록</Txt>
-            <Txt style={{ fontSize: 14 }}>
-              <Txt weight="extrabold" style={{ fontSize: 18, fontFamily: fonts.extrabold }}>
+            <Txt style={{ fontSize: 14, color: colors.muted }}>
+              <Txt weight="extrabold" style={{ fontSize: 20 }}>
                 {streak}
               </Txt>
               일째
@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
   memoDot: { position: 'absolute', top: 6, right: 6, width: 5, height: 5, borderRadius: 3 },
   photoMark: { position: 'absolute', top: 4, right: 4 },
   streak: {
-    marginTop: 'auto', marginBottom: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    marginTop: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     borderWidth: StyleSheet.hairlineWidth, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 12,
   },
 });

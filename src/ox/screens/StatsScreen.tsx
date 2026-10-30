@@ -69,7 +69,7 @@ export default function StatsScreen({ navigation, route }: ScreenProps<'Stats'>)
         </View>
 
         <Card style={{ padding: 16 }}>
-          <Txt style={{ fontSize: 13, color: colors.muted }}>월별 달성률</Txt>
+          <Txt weight="semibold" style={{ fontSize: 14 }}>월별 달성률</Txt>
           <View style={[styles.chart, { borderBottomColor: colors.line }]}>
             {[0.5, 1].map((f) => (
               <View key={f} style={[styles.gridLine, { bottom: CHART_HEIGHT * f, borderTopColor: colors.line }]} />
@@ -99,7 +99,7 @@ export default function StatsScreen({ navigation, route }: ScreenProps<'Stats'>)
           <View pointerEvents={premium ? 'auto' : 'none'} style={{ gap: 12, opacity: premium ? 1 : 0.35 }}>
             <Card style={{ padding: 16, gap: 12 }}>
               <View style={styles.cardHead}>
-                <Txt style={{ fontSize: 13, color: colors.muted }}>최근 1년</Txt>
+                <Txt weight="semibold" style={{ fontSize: 14 }}>최근 1년</Txt>
                 <Txt style={{ fontSize: 13, color: colors.muted }}>
                   {premium ? `O ${stats.year.o}일 · 달성률 ${stats.year.rate ?? 0}%` : 'O --일 · 달성률 --%'}
                 </Txt>
@@ -107,7 +107,7 @@ export default function StatsScreen({ navigation, route }: ScreenProps<'Stats'>)
               <Heatmap byDate={stats.byDate} start={stats.start} today={today} weekStart={weekStart} />
             </Card>
             <Card style={{ padding: 16, gap: 10 }}>
-              <Txt style={{ fontSize: 13, color: colors.muted }}>요일별 달성률</Txt>
+              <Txt weight="semibold" style={{ fontSize: 14 }}>요일별 달성률</Txt>
               <WeekdayBars rates={stats.weekdays} weekStart={weekStart} hidden={!premium} />
             </Card>
           </View>
@@ -221,7 +221,7 @@ const WeekdayBars = ({ rates, weekStart, hidden }: { rates: (number | null)[]; w
         const rate = rates[dow];
         return (
           <View key={dow} style={styles.wdRow}>
-            <Txt style={{ width: 16, fontSize: 13, color: dow === 0 ? colors.x : colors.muted }}>{labels[i]}</Txt>
+            <Txt style={{ width: 16, fontSize: 13, color: dow === 0 ? colors.x : dow === 6 ? colors.o : colors.muted }}>{labels[i]}</Txt>
             <View style={[styles.wdTrack, { backgroundColor: colors.cell }]}>
               <View style={{ width: `${hidden ? 50 : (rate ?? 0)}%`, height: '100%', borderRadius: 5, backgroundColor: rate !== null && rate === best && best > 0 ? colors.o : colors.oSoft }} />
             </View>
@@ -240,7 +240,8 @@ const styles = StyleSheet.create({
   chart: { height: CHART_HEIGHT + 24, flexDirection: 'row', alignItems: 'flex-end', gap: 10, borderBottomWidth: 1, marginTop: 12 },
   gridLine: { position: 'absolute', left: 0, right: 0, borderTopWidth: StyleSheet.hairlineWidth },
   barCol: { flex: 1, alignItems: 'center', justifyContent: 'flex-end' },
-  bar: { width: '100%', borderTopLeftRadius: 6, borderTopRightRadius: 6 },
+  // 기록을 시작한 지 얼마 안 돼 달이 적어도 막대가 화면 폭만큼 늘어나지 않게 한다.
+  bar: { width: '100%', maxWidth: 40, borderTopLeftRadius: 6, borderTopRightRadius: 6 },
   xLabels: { flexDirection: 'row', gap: 10, marginTop: 6 },
   cardHead: { flexDirection: 'row', justifyContent: 'space-between' },
   legend: { flexDirection: 'row', justifyContent: 'flex-end', gap: 12 },
