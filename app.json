@@ -2,7 +2,7 @@
   "expo": {
     "name": "하루 OX 캘린더",
     "slug": "today-receipt",
-    "version": "2.0.0",
+    "version": "2.0.1",
     "runtimeVersion": {
       "policy": "appVersion"
     },
