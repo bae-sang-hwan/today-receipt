@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { getAvailablePurchases, useIAP, type Purchase } from 'expo-iap';
+import { fetchProducts, getAvailablePurchases, useIAP, type Purchase } from 'expo-iap';
 import { PREMIUM_FALLBACK_PRICE, PREMIUM_SKU } from '../config';
 import { setPremium } from '../db/settings';
 import { haptic } from '../haptics';
@@ -30,6 +30,7 @@ const owns = (purchases: Purchase[]) => purchases.some((p) => p.productId === PR
 export const PremiumProvider = ({ children }: { children: React.ReactNode }) => {
   const [purchasing, setPurchasing] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
+  const [price, setPrice] = useState<string | null>(null);
   const finishRef = useRef<((args: { purchase: Purchase; isConsumable?: boolean }) => Promise<void>) | null>(null);
 
   const iap = useIAP({
@@ -53,7 +54,7 @@ export const PremiumProvider = ({ children }: { children: React.ReactNode }) => 
   });
   finishRef.current = iap.finishTransaction;
 
-  const { connected, fetchProducts } = iap;
+  const { connected } = iap;
 
   // 조회에 성공했을 때만 반영한다. 실패하면 throw하므로 기존 상태를 그대로 둔다.
   // 재설치나 기기 변경 후에도 같은 Google 계정이면 다시 켜지고, 환불되면 꺼진다.
@@ -61,11 +62,18 @@ export const PremiumProvider = ({ children }: { children: React.ReactNode }) => 
     setPremium(owns(await getAvailablePurchases()));
   }, []);
 
+  // 훅의 fetchProducts는 실패하면 console.error를 찍어(에뮬레이터 등 상품 조회가 안 되는 환경) 화면에 에러가 뜨므로
+  // 로그 없이 throw만 하는 단독 함수로 가격을 받아온다. 실패하면 기본 가격을 보여준다.
   useEffect(() => {
     if (!connected) return;
-    fetchProducts({ skus: [PREMIUM_SKU], type: 'in-app' }).catch(() => {});
+    fetchProducts({ skus: [PREMIUM_SKU], type: 'in-app' })
+      .then((items) => {
+        const product = items?.find((p) => p.id === PREMIUM_SKU);
+        if (product) setPrice(product.displayPrice);
+      })
+      .catch(() => {});
     sync().catch(() => {});
-  }, [connected, fetchProducts, sync]);
+  }, [connected, sync]);
 
   const purchase = useCallback(async () => {
     setLastError(null);
@@ -93,11 +101,9 @@ export const PremiumProvider = ({ children }: { children: React.ReactNode }) => 
     return true;
   }, [sync]);
 
-  const product = iap.products.find((p) => p.id === PREMIUM_SKU);
-
   const value = useMemo(
-    () => ({ price: product?.displayPrice ?? PREMIUM_FALLBACK_PRICE, connected, purchasing, purchase, restore, lastError }),
-    [product?.displayPrice, connected, purchasing, purchase, restore, lastError],
+    () => ({ price: price ?? PREMIUM_FALLBACK_PRICE, connected, purchasing, purchase, restore, lastError }),
+    [price, connected, purchasing, purchase, restore, lastError],
   );
 
   return <PremiumContext.Provider value={value}>{children}</PremiumContext.Provider>;

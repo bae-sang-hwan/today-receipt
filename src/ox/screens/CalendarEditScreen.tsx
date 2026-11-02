@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
   body: { padding: 16, gap: 22, paddingBottom: 40 },
   label: { fontSize: 13, marginBottom: 8 },
   input: { borderWidth: 1.5, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 13, fontSize: 16 },
-  swatches: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  swatches: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 10 },
   swatchRing: { padding: 3, borderRadius: 22, borderWidth: 2 },
   swatch: { width: 30, height: 30, borderRadius: 15 },
   styles: { flexDirection: 'row', gap: 10 },

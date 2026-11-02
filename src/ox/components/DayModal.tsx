@@ -7,6 +7,7 @@ import { getRecord, saveRecord, type Calendar, type MarkValue } from '../db/repo
 import { importPhoto } from '../db/photos';
 import { ensureLocalPhoto } from '../services/sync';
 import { pickPhoto } from '../services/photoPicker';
+import { maybeRequestReview } from '../services/review';
 import { formatLongDate } from '../domain/date';
 import { MEMO_MAX_LENGTH } from '../config';
 
@@ -79,6 +80,8 @@ export const DayModal = ({ calendar, date, onClose }: { calendar: Calendar; date
         }
       }
       saveRecord(calendar.id, date, value, memo.trim(), photo);
+      // 모달이 닫힌 뒤에 리뷰창이 뜨도록 조금 늦춘다.
+      if (value) setTimeout(() => maybeRequestReview(calendar.id), 600);
     }
     onClose();
   };
@@ -104,7 +107,7 @@ export const DayModal = ({ calendar, date, onClose }: { calendar: Calendar; date
                   accessibilityLabel={v}
                   accessibilityState={{ selected: on }}
                 >
-                  <Mark value={v} markStyle={calendar.markStyle} size={44} />
+                  <Mark value={v} markStyle={calendar.markStyle} size={52} />
                 </Tap>
               );
             })}

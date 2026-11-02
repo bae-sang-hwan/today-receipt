@@ -14,7 +14,6 @@ export const BANNER_AD_UNIT_ID = __DEV__ ? TestIds.ADAPTIVE_BANNER : 'ca-app-pub
 export const GOOGLE_WEB_CLIENT_ID = '296991066097-2i9s6lddu6afbpidckl8ttt0k064jm6r.apps.googleusercontent.com';
 
 // 비어 있으면 설정 화면에서 해당 줄을 숨긴다. 출시 전에 채워야 한다.
-export const CONTACT_EMAIL = '01039766629b@gmail.com';
 export const PRIVACY_POLICY_URL = 'https://bae-sang-hwan.github.io/today-receipt/';
 export const ACCOUNT_DELETION_URL = 'https://bae-sang-hwan.github.io/today-receipt/delete-account';
 
@@ -28,3 +27,6 @@ export const PHOTO_QUALITY = 0.7;
 // 매일 알림을 미리 예약해 두는 기간. 이 기간 동안 앱을 안 열면 알림이 멈춘다.
 export const REMINDER_SCHEDULE_DAYS = 30;
 export const DEFAULT_REMINDER = '21:00';
+
+// 한 캘린더에 오늘까지 이만큼 연속으로 O나 X를 기록하면 스토어 리뷰창을 한 번 띄운다.
+export const REVIEW_STREAK_DAYS = 3;
