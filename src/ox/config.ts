@@ -27,3 +27,6 @@ export const PHOTO_QUALITY = 0.7;
 // 매일 알림을 미리 예약해 두는 기간. 이 기간 동안 앱을 안 열면 알림이 멈춘다.
 export const REMINDER_SCHEDULE_DAYS = 30;
 export const DEFAULT_REMINDER = '21:00';
+
+// 한 캘린더에 오늘까지 이만큼 연속으로 O나 X를 기록하면 스토어 리뷰창을 한 번 띄운다.
+export const REVIEW_STREAK_DAYS = 3;
